@@ -5,21 +5,16 @@ using Utils.Models;
 public enum MapDisplayType
 {
     HeightMap,
-    ColorMap
+    ColorMap,
+    Mesh
 }
 
-[System.Serializable]
-public struct TerrainHeightRegion
-{
-    public string Name;
-    [Range(0, 1)]
-    public float Height;
-    public Color32 Color;
-}
 
 public class MapGenerator : MonoBehaviour
 {
     public Renderer TextureRenderer;
+    public MeshFilter MeshFilter;
+    public MeshRenderer MeshRenderer;
 
     [Header("Map settings")]
     public MapDisplayType DisplayType = MapDisplayType.HeightMap;
@@ -33,67 +28,38 @@ public class MapGenerator : MonoBehaviour
     public int MapHeight = 255;
     private int PrevMapHeight = 255;
 
+    [Min(1)]
+    public int TerrainDepth = 20;
+
     [Header("Noise settings")]
     public int seed = 0;
-    public NoiseParams noiseParams = new NoiseParams();
+    public NoiseParams noiseParams = NoiseParams.CreateWithDefaults();
 
     [Header("Terrain settings")]
-    public TerrainHeightRegion[] Regions;
+    public Gradient TerrainRegions;
     
     [Space]
     public bool AutoUpdate = false;
 
     public void Generate()
     {
-        float[] noiseMap = Utils.NoiseHeightMap.GenerateMap(MapWidth, MapHeight, noiseParams, seed);
+        float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapWidth, MapHeight, noiseParams, seed);
+        Color32[] colorMap = CreateColorMapFromRegions(noiseMap);
 
         switch (DisplayType)
         {
             case MapDisplayType.HeightMap:
-                DrawTexture(Utils.TextureGenerator.CreateFromHeightMap(noiseMap, MapWidth, MapHeight));
+                DisplayTexture(Utils.TextureGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight));
                 break;
 
             case MapDisplayType.ColorMap:
-                Color32[] colorMap = CreateColorMapFromRegions(noiseMap);
-                DrawTexture(Utils.TextureGenerator.CreateFromColorMap(colorMap, MapWidth, MapHeight));
+                DisplayTexture(Utils.TextureGenerator.GenerateFromColorMap(colorMap, MapWidth, MapHeight));
                 break;
 
-            default:
+            case MapDisplayType.Mesh:
+                DisplayMesh(Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight, TerrainDepth), Utils.TextureGenerator.GenerateFromColorMap(colorMap, MapWidth, MapHeight));
                 break;
         }
-    }
-
-    private Color32[] CreateColorMapFromRegions(float[] noiseMap)
-    {
-        Color32[] map = new Color32[noiseMap.Length];
-
-        for (int mapIter = 0; mapIter < noiseMap.Length; mapIter++)
-        {
-            bool found = false;
-
-            for (int regionIter = 0; regionIter < Regions.Length; regionIter++)
-            {
-                if (noiseMap[mapIter] <= Regions[regionIter].Height)
-                {
-                    found = true;
-                    map[mapIter] = Regions[regionIter].Color;
-                    break;
-                }
-            }
-
-            if (!found)
-            {
-                byte heightValue = (byte)(noiseMap[mapIter] * 255);
-                map[mapIter] = new Color32(heightValue, heightValue, heightValue, 255);
-            }
-        }
-
-        return map;
-    }
-
-    private void DrawTexture(Texture2D texture)
-    {
-        TextureRenderer.sharedMaterial.mainTexture = texture;
     }
 
     public void OnValidate()
@@ -113,5 +79,28 @@ public class MapGenerator : MonoBehaviour
             PrevMapHeight = MapHeight;
         }
 
+    }
+
+    private Color32[] CreateColorMapFromRegions(float[] noiseMap)
+    {
+        Color32[] map = new Color32[noiseMap.Length];
+
+        for (int i = 0; i < noiseMap.Length; i++)
+        {
+            map[i] = TerrainRegions.Evaluate(noiseMap[i]);
+        }
+
+        return map;
+    }
+
+    private void DisplayTexture(Texture2D texture)
+    {
+        TextureRenderer.sharedMaterial.mainTexture = texture;
+    }
+
+    private void DisplayMesh(MeshData meshData, Texture2D texture)
+    {
+        MeshFilter.sharedMesh = meshData.Create();
+        MeshRenderer.sharedMaterial.mainTexture = texture;
     }
 }

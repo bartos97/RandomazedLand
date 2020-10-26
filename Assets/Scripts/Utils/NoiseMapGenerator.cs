@@ -3,10 +3,18 @@ using Utils.Models;
 
 namespace Utils
 {
-    public static class NoiseHeightMap
+    public static class NoiseMapGenerator
     {
         private const int MaxRandomOffset = 10000;
 
+        /// <summary>
+        /// Generates height map based on Perlin Noise
+        /// </summary>
+        /// <param name="width">map width (X axis)</param>
+        /// <param name="height">map height (Z axis)</param>
+        /// <param name="noiseParams">parameters for noise generation</param>
+        /// <param name="seed">seed for random number generator</param>
+        /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
         public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, int seed)
         {
             float halfWidth = width / 2f;
