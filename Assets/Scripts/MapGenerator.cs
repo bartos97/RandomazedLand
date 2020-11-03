@@ -4,27 +4,27 @@ using Utils.Models;
 
 public enum MapDisplayType
 {
-    HeightMap,
-    ColorMap,
-    Mesh
+    Texture,
+    ColorShader
 }
 
 
 public class MapGenerator : MonoBehaviour
 {
-    public Renderer TextureRenderer;
     public MeshFilter MeshFilter;
     public MeshRenderer MeshRenderer;
 
     [Header("Map settings")]
-    public MapDisplayType DisplayType = MapDisplayType.HeightMap;
+    public MapDisplayType DisplayType = MapDisplayType.Texture;
     public bool MapAsSquare = true;
 
     [Min(1)]
+    [Tooltip("Number of vertices in X axis")]
     public int MapWidth = 255;
     private int PrevMapWidth = 255;
 
     [Min(1)]
+    [Tooltip("Number of vertices in Z axis")]
     public int MapHeight = 255;
     private int PrevMapHeight = 255;
 
@@ -37,6 +37,9 @@ public class MapGenerator : MonoBehaviour
 
     [Header("Terrain settings")]
     public Gradient TerrainRegions;
+    //[Range(0, 1)]
+    //public float WaterLevel = 0f;
+    public AnimationCurve MeshHeightCurve;
     
     [Space]
     public bool AutoUpdate = false;
@@ -44,20 +47,15 @@ public class MapGenerator : MonoBehaviour
     public void Generate()
     {
         float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapWidth, MapHeight, noiseParams, seed);
-        Color32[] colorMap = CreateColorMapFromRegions(noiseMap);
 
         switch (DisplayType)
         {
-            case MapDisplayType.HeightMap:
-                DisplayTexture(Utils.TextureGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight));
+            case MapDisplayType.Texture:
+                DisplayMesh(Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight, TerrainDepth, MeshHeightCurve), Utils.TextureGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight));
                 break;
 
-            case MapDisplayType.ColorMap:
-                DisplayTexture(Utils.TextureGenerator.GenerateFromColorMap(colorMap, MapWidth, MapHeight));
-                break;
-
-            case MapDisplayType.Mesh:
-                DisplayMesh(Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapWidth, MapHeight, TerrainDepth), Utils.TextureGenerator.GenerateFromColorMap(colorMap, MapWidth, MapHeight));
+            case MapDisplayType.ColorShader:
+                DisplayMesh(Utils.MeshGenerator.GenerateFromHeightMapWithColors(noiseMap, TerrainRegions, MapWidth, MapHeight, TerrainDepth, MeshHeightCurve));
                 break;
         }
     }
@@ -74,28 +72,16 @@ public class MapGenerator : MonoBehaviour
 
         if (PrevMapWidth != MapWidth || PrevMapHeight != MapHeight)
         {
-            TextureRenderer.transform.localScale = new Vector3(MapWidth, 1, MapHeight);
             PrevMapWidth = MapWidth;
             PrevMapHeight = MapHeight;
         }
 
     }
 
-    private Color32[] CreateColorMapFromRegions(float[] noiseMap)
+    private void DisplayMesh(MeshData meshData)
     {
-        Color32[] map = new Color32[noiseMap.Length];
-
-        for (int i = 0; i < noiseMap.Length; i++)
-        {
-            map[i] = TerrainRegions.Evaluate(noiseMap[i]);
-        }
-
-        return map;
-    }
-
-    private void DisplayTexture(Texture2D texture)
-    {
-        TextureRenderer.sharedMaterial.mainTexture = texture;
+        MeshFilter.sharedMesh.Clear();
+        MeshFilter.sharedMesh = meshData.Create();
     }
 
     private void DisplayMesh(MeshData meshData, Texture2D texture)
