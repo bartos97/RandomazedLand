@@ -6,41 +6,36 @@ namespace Utils
 {
     public static class MeshGenerator
     {
-        public static MeshData GenerateFromHeightMap(float[] map, int width, int height, int depth, AnimationCurve heightCurve)
+        public static MeshData GenerateFromHeightMap(float[] noiseMap, int mapSize, int depth, AnimationCurve heightCurve, int levelOfDetail, Gradient colors)
         {
-            Assert.AreEqual(map.Length, width * height);
-            var data = new MeshData(width, height);
-            float offsetX = (width - 1) / -2f;
-            float offsetZ = (height - 1) / -2f;
+            Assert.AreEqual(noiseMap.Length, mapSize * mapSize);
+            Assert.AreEqual((mapSize - 1) % levelOfDetail, 0); //LOD has to be devider of mapSize - 1
 
-            int vertexIndex = 0;
-            for (int y = 0; y < height; y++)
+            float offsetX = (mapSize - 1) / -2f;
+            float offsetZ = (mapSize - 1) / -2f;
+            int meshSize = (mapSize - 1) / levelOfDetail + 1;
+            var data = new MeshData(meshSize, meshSize);
+
+            int iter = 0;
+            for (int zCoord = 0; zCoord < mapSize; zCoord += levelOfDetail)
             {
-                for (int x = 0; x < width; x++)
+                for (int xCoord = 0; xCoord < mapSize; xCoord += levelOfDetail)
                 {
-                    data.Vertices[vertexIndex] = new Vector3((x + offsetX), heightCurve.Evaluate(map[vertexIndex]) * depth, (y + offsetZ));
-                    data.UVs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
+                    int noiseCoord = xCoord + zCoord * mapSize;
+                    float yCoord = heightCurve.Evaluate(noiseMap[noiseCoord]) * depth;
 
-                    if (x < width - 1 && y < height - 1)
+                    data.Vertices[iter] = new Vector3(xCoord + offsetX, yCoord, zCoord + offsetZ);
+                    data.UVs[iter] = new Vector2(xCoord / (float)mapSize, zCoord / (float)mapSize);
+                    data.Colors[iter] = colors.Evaluate(noiseMap[noiseCoord]);
+
+                    if (xCoord < mapSize - 1 && zCoord < mapSize - 1)
                     {
-                        data.AddTriangleIndices(vertexIndex, vertexIndex + width, vertexIndex + 1);
-                        data.AddTriangleIndices(vertexIndex + 1, vertexIndex + width, vertexIndex + width + 1);
+                        data.AddTriangleIndices(iter, iter + meshSize, iter + 1);
+                        data.AddTriangleIndices(iter + 1, iter + meshSize, iter + meshSize + 1);
                     }
 
-                    vertexIndex++;
+                    iter++;
                 }
-            }
-
-            return data;
-        }
-
-        public static MeshData GenerateFromHeightMapWithColors(float[] map, Gradient colors, int width, int height, int depth, AnimationCurve heightCurve)
-        {
-            var data = GenerateFromHeightMap(map, width, height, depth, heightCurve);
-
-            for (int i = 0; i < map.Length; i++)
-            {
-                data.Colors[i] = colors.Evaluate(map[i]);
             }
 
             return data;
