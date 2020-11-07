@@ -1,18 +1,19 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using TerrainGeneration;
 
 [CustomEditor(typeof(MapGenerator))]
 public class MapGeneratorEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        var noiseMapGenerator = (MapGenerator)target;
+        var terrainMapGenerator = (MapGenerator)target;
         bool valueChanged = DrawDefaultInspector();
         bool buttonClicked = GUILayout.Button("Generate map");
 
-        if ((noiseMapGenerator.AutoUpdate && valueChanged) || buttonClicked)
+        if ((terrainMapGenerator.AutoUpdate && valueChanged) || buttonClicked)
         {
-            noiseMapGenerator.Generate();
+            terrainMapGenerator.Generate();
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Utils.Models;
+using Utils.DataStructures;
 
 namespace Utils
 {
