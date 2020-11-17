@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using TerrainGeneration.DataStructures;
+﻿using System.Collections.Generic;
+using DataStructures;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -9,7 +7,7 @@ namespace TerrainGeneration
 {
     public class InfiniteTerrain : MonoBehaviour
     {
-        public Transform playerTransform;
+        public Transform player;
 
         private const float maxViewDistance = 250f;
         private const int chunkSize = MapGenerator.MapChunkVerticesCount - 1;
@@ -21,7 +19,7 @@ namespace TerrainGeneration
         private void Start()
         {
             Assert.IsTrue(maxViewDistance > chunkSize);
-            playerTransform.position = Vector3.zero;
+            player.position = Vector3.zero;
         }
 
         private void Update()
@@ -32,8 +30,8 @@ namespace TerrainGeneration
         private void UpdateVisibleChunks()
         {
             ClearLastChunks();
-            int xMiddleChunkCoord = Mathf.RoundToInt(playerTransform.position.x / chunkSize);
-            int yMiddleChunkCoord = Mathf.RoundToInt(playerTransform.position.z / chunkSize);
+            int xMiddleChunkCoord = Mathf.RoundToInt(player.position.x / chunkSize);
+            int yMiddleChunkCoord = Mathf.RoundToInt(player.position.z / chunkSize);
 
             for (int yChunkCoordIter = -numOfVisibleChunksInViewDirection; yChunkCoordIter <= numOfVisibleChunksInViewDirection; yChunkCoordIter++)
             {
@@ -43,7 +41,7 @@ namespace TerrainGeneration
 
                     if (chunksRepository.ContainsKey(chunkCoords))
                     {
-                        chunksRepository[chunkCoords].UpdateVisibility(playerTransform.position, maxViewDistance);
+                        chunksRepository[chunkCoords].UpdateVisibility(player.position, maxViewDistance);
                         if (chunksRepository[chunkCoords].IsVisible)
                         {
                             lastVisibleChunks.Add(chunksRepository[chunkCoords]);
@@ -60,7 +58,7 @@ namespace TerrainGeneration
         private void ClearLastChunks()
         {
             foreach (var chunk in lastVisibleChunks)
-                chunk.SetVisibility(false);
+                chunk.IsVisible = false;
             lastVisibleChunks.Clear();
         }
     }

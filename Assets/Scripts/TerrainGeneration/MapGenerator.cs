@@ -1,6 +1,6 @@
 ﻿using System;
 using UnityEngine;
-using Utils.DataStructures;
+using DataStructures;
 
 
 namespace TerrainGeneration

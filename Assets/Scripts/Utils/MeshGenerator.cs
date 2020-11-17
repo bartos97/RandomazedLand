@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
-using Utils.DataStructures;
+using DataStructures;
 
 namespace Utils
 {
