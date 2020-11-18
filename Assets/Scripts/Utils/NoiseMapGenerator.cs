@@ -13,6 +13,8 @@ namespace Utils
         /// <param name="width">map width (X axis)</param>
         /// <param name="height">map height (Z axis)</param>
         /// <param name="noiseParams">parameters for noise generation</param>
+        /// <param name="offsetX">perlin noise map position X</param>
+        /// <param name="offsetY">perlin noise map position Y</param>
         /// <param name="seed">seed for random number generator</param>
         /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
         public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, float offsetX, float offsetY, int seed)

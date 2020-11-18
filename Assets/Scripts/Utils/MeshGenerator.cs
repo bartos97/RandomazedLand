@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
-using DataStructures;
+using TerrainGeneration;
 
 namespace Utils
 {
