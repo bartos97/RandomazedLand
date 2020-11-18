@@ -1,7 +1,9 @@
 ﻿using System;
 using UnityEngine;
 using DataStructures;
-
+using System.Threading;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace TerrainGeneration
 {
@@ -23,6 +25,18 @@ namespace TerrainGeneration
 
     public class MapGenerator : MonoBehaviour
     {
+        struct MapThreadData<T>
+        {
+            public readonly Action<T> callback;
+            public readonly T parameter;
+
+            public MapThreadData(Action<T> callback, T parameter)
+            {
+                this.callback = callback;
+                this.parameter = parameter;
+            }
+        }
+
         //Number of vertices in one dimention of map
         public const int MapChunkVerticesCount = 241;
 
@@ -36,6 +50,8 @@ namespace TerrainGeneration
 
         [Header("Noise settings")]
         public int seed = 0;
+        public float offsetX = 0f;
+        public float offsetY = 0f;
         public NoiseParams noiseParams = NoiseParams.CreateWithDefaults();
 
         [Header("Terrain settings")]
@@ -43,38 +59,58 @@ namespace TerrainGeneration
         public int TerrainDepthMultiplier = 20;
         public Gradient TerrainRegions;
         public AnimationCurve MeshHeightCurve;
-    
+
         [Space]
         public bool AutoUpdate = false;
 
+        private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
+        private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
+
         public void Generate()
         {
-            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, seed);
+            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed);
             var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, TerrainDepthMultiplier, MeshHeightCurve, (int)LevelOfDetail, TerrainRegions);
+            MeshFilter.sharedMesh.Clear();
+            MeshFilter.sharedMesh = meshData.Create();
+        }
 
-            switch (DisplayType)
+        public void Update()
+        {
+            while (noiseMapQueue.TryDequeue(out MapThreadData<float[]> threadData))
+                threadData.callback(threadData.parameter);
+
+            while (meshQueue.TryDequeue(out MapThreadData<MeshData> threadData))
+                threadData.callback(threadData.parameter);
+        }
+
+        public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY)
+        {
+            ThreadStart ts = delegate
             {
-                case MapDisplayType.Texture:
-                    DisplayMesh(meshData, Utils.TextureGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, MapChunkVerticesCount));
-                    break;
-
-                case MapDisplayType.ColorShader:
-                    DisplayMesh(meshData);
-                    break;
-            }
+                NoiseMapThread(callback, offsetX, offsetY);
+            };
+            new Thread(ts).Start();
         }
 
-        private void DisplayMesh(MeshData meshData)
+        public void RequestMeshData(Action<MeshData> callback, float[] noiseMap)
         {
-            MeshFilter.sharedMesh.Clear();
-            MeshFilter.sharedMesh = meshData.Create();
+            ThreadStart ts = delegate
+            {
+                MeshDataThread(callback, noiseMap);
+            };
+            new Thread(ts).Start();
         }
 
-        private void DisplayMesh(MeshData meshData, Texture2D texture)
+        private void NoiseMapThread(Action<float[]> callback, float offsetX, float offsetY)
         {
-            MeshFilter.sharedMesh.Clear();
-            MeshFilter.sharedMesh = meshData.Create();
-            MeshRenderer.sharedMaterial.mainTexture = texture;
+            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed);
+            noiseMapQueue.Enqueue(new MapThreadData<float[]>(callback, noiseMap));
+        }
+
+        private void MeshDataThread(Action<MeshData> callback, float[] noiseMap)
+        {
+            var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, TerrainDepthMultiplier, MeshHeightCurve, (int)LevelOfDetail, TerrainRegions);
+            meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
         }
     }
 }

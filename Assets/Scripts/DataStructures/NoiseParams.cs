@@ -5,8 +5,6 @@ namespace DataStructures
     [System.Serializable]
     public struct NoiseParams
     {
-        public const float DefaultOffsetX = 0f;
-        public const float DefaultOffsetY = 0f;
         public const float DefaultScale = 1f;
         public const float DefaultPersistance = 1f;
         public const float DefaultLacunarity = 1f;
@@ -16,8 +14,6 @@ namespace DataStructures
         {
             return new NoiseParams
             {
-                OffsetX = DefaultOffsetX,
-                OffsetY = DefaultOffsetY,
                 Scale = DefaultScale,
                 Persistance = DefaultPersistance,
                 Lacunarity = DefaultLacunarity,
@@ -25,8 +21,6 @@ namespace DataStructures
             };
         }
 
-        public float OffsetX;
-        public float OffsetY;
         [Min(1f)]
         public float Scale;
         [Range(0, 1)]

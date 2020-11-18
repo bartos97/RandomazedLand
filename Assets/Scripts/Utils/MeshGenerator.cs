@@ -15,6 +15,7 @@ namespace Utils
             float offsetZ = (mapSize - 1) / -2f;
             int meshSize = (mapSize - 1) / levelOfDetail + 1;
             var data = new MeshData(meshSize, meshSize);
+            var heightCurveCopy = new AnimationCurve(heightCurve.keys);
 
             int iter = 0;
             for (int zCoord = 0; zCoord < mapSize; zCoord += levelOfDetail)
@@ -22,7 +23,7 @@ namespace Utils
                 for (int xCoord = 0; xCoord < mapSize; xCoord += levelOfDetail)
                 {
                     int noiseCoord = xCoord + zCoord * mapSize;
-                    float yCoord = heightCurve.Evaluate(noiseMap[noiseCoord]) * depth;
+                    float yCoord = heightCurveCopy.Evaluate(noiseMap[noiseCoord]) * depth;
 
                     data.Vertices[iter] = new Vector3(xCoord + offsetX, yCoord, zCoord + offsetZ);
                     data.UVs[iter] = new Vector2(xCoord / (float)mapSize, zCoord / (float)mapSize);

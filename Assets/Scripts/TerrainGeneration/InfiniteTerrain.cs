@@ -8,6 +8,8 @@ namespace TerrainGeneration
     public class InfiniteTerrain : MonoBehaviour
     {
         public Transform player;
+        public static MapGenerator mapGenerator;
+        public Material material;
 
         private const float maxViewDistance = 250f;
         private const int chunkSize = MapGenerator.MapChunkVerticesCount - 1;
@@ -19,6 +21,7 @@ namespace TerrainGeneration
         private void Start()
         {
             Assert.IsTrue(maxViewDistance > chunkSize);
+            mapGenerator = FindObjectOfType<MapGenerator>();
             player.position = Vector3.zero;
         }
 
@@ -49,7 +52,7 @@ namespace TerrainGeneration
                     }
                     else
                     {
-                        chunksRepository.Add(chunkCoords, new TerrainChunk(chunkCoords, chunkSize, this.transform));
+                        chunksRepository.Add(chunkCoords, new TerrainChunk(chunkCoords, chunkSize, transform, material));
                     }
                 }
             }
@@ -60,6 +63,59 @@ namespace TerrainGeneration
             foreach (var chunk in lastVisibleChunks)
                 chunk.IsVisible = false;
             lastVisibleChunks.Clear();
+        }
+
+        private class TerrainChunk
+        {
+            private readonly GameObject mesh;
+            private readonly MeshRenderer meshRenderer;
+            private readonly MeshFilter meshFilter;
+            private Vector3 positionInWorld;
+            private Bounds positionBounds;
+            private bool _isVisible;
+
+            public TerrainChunk(Vector2 gridCoords, int size, Transform parentObject, Material material)
+            {
+                positionInWorld = new Vector3(gridCoords.x * size, 0f, gridCoords.y * size);
+                positionBounds = new Bounds(positionInWorld, Vector3.one * size);
+
+                mesh = new GameObject("Terrain chunk");
+                meshRenderer = mesh.AddComponent<MeshRenderer>();
+                meshFilter = mesh.AddComponent<MeshFilter>();
+
+                meshRenderer.material = material;
+                mesh.transform.position = positionInWorld;
+                mesh.transform.parent = parentObject;
+                mesh.SetActive(true);
+
+                mapGenerator.RequestNoiseMap(onNoiseMapReceive, positionInWorld.x, positionInWorld.z);
+            }
+
+            public bool IsVisible
+            {
+                get { return _isVisible; }
+                set
+                {
+                    _isVisible = value;
+                    mesh.SetActive(value);
+                }
+            }
+
+            public void UpdateVisibility(Vector3 playerPosition, float maxViewDistance)
+            {
+                float distanceFromPlayer = positionBounds.SqrDistance(playerPosition);
+                IsVisible = distanceFromPlayer <= maxViewDistance * maxViewDistance; //distanceFromPlayer is squared
+            }
+
+            private void onNoiseMapReceive(float[] noiseMap)
+            {
+                mapGenerator.RequestMeshData(onMeshDataReceive, noiseMap);
+            }
+
+            private void onMeshDataReceive(MeshData meshData)
+            {
+                meshFilter.mesh = meshData.Create();
+            }
         }
     }
 }

@@ -15,12 +15,12 @@ namespace Utils
         /// <param name="noiseParams">parameters for noise generation</param>
         /// <param name="seed">seed for random number generator</param>
         /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
-        public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, int seed)
+        public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, float offsetX, float offsetY, int seed)
         {
             float halfWidth = width / 2f;
             float halfHeight = height / 2f;
             float[] map = new float[width * height];
-            Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.OctavesAmount, noiseParams.OffsetX, noiseParams.OffsetY, seed);
+            Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.OctavesAmount, offsetX, offsetY, seed);
 
             int mapIndex = 0;
             for (int y = 0; y < height; y++)
@@ -33,8 +33,8 @@ namespace Utils
 
                     for (int i = 0; i < noiseParams.OctavesAmount; i++)
                     {
-                        float xPerlinCoord = ((float)x - halfWidth) / noiseParams.Scale * frequency + octavesOffsets[i].x;
-                        float yPerlinCoord = ((float)y - halfHeight) / noiseParams.Scale * frequency + octavesOffsets[i].y;
+                        float xPerlinCoord = ((float)x - halfWidth + octavesOffsets[i].x) / noiseParams.Scale * frequency;
+                        float yPerlinCoord = ((float)y - halfHeight + octavesOffsets[i].y) / noiseParams.Scale * frequency;
                         float noiseValue = Mathf.PerlinNoise(xPerlinCoord, yPerlinCoord) - 0.5f;
 
                         noiseHeight += noiseValue * amplitude;
