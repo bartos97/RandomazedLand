@@ -1,31 +1,14 @@
 ﻿using System;
 using UnityEngine;
-using DataStructures;
 using System.Threading;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace TerrainGeneration
 {
-    public enum LevelOfDetail
-    {
-        _1 = 1,
-        _2 = 2,
-        _4 = 4,
-        _6 = 6,
-        _8 = 8
-    }
-
     public class MapGenerator : MonoBehaviour
     {
-        //Number of vertices in one dimension of map
-        public const int MapChunkVerticesCount = 241;
-
-        [Header("Map settings")]
-        public float offsetX = 0f;
-        public float offsetY = 0f;
-        [Tooltip("Mesh simplification increment")]
-        public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
+        [Header("Gameplay stuff")]
+        public Transform playerObject;        
 
         [Header("Noise settings")]
         public int seed = 0;
@@ -33,6 +16,7 @@ namespace TerrainGeneration
 
         [Header("Terrain settings")]
         [Min(1)]
+        public Material meshMaterial;
         public int TerrainDepthMultiplier = 20;
         public Gradient TerrainRegions;
         public AnimationCurve MeshHeightCurve;
@@ -41,10 +25,23 @@ namespace TerrainGeneration
         public GameObject previewMesh;
         public MeshFilter previewMeshFilter;
         public MeshRenderer previewMeshRenderer;
+        public float offsetX = 0f;
+        public float offsetY = 0f;
+        public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
         public bool AutoUpdatePreview = false;
+
+        //Number of vertices in one dimension of map
+        private const int MapChunkVerticesCount = LevelOfDetailConfig.chunkSize + 1;
 
         private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
         private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
+
+        private readonly InfiniteTerrain infiniteTerrain;
+
+        public MapGenerator()
+        {
+            infiniteTerrain = new InfiniteTerrain(this);
+        }
 
         public void Start()
         {
@@ -58,6 +55,8 @@ namespace TerrainGeneration
 
             while (meshQueue.TryDequeue(out MapThreadData<MeshData> threadData))
                 threadData.callback(threadData.parameter);
+
+            infiniteTerrain.OnUpdate();
         }
 
         public void GeneratePreview()
