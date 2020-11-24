@@ -4,7 +4,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 
 namespace TerrainGeneration
-{
+{   
     public class MapGenerator : MonoBehaviour
     {
         [Header("Gameplay stuff")]
@@ -28,6 +28,7 @@ namespace TerrainGeneration
         public float offsetX = 0f;
         public float offsetY = 0f;
         public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
+        public Utils.NormalizationType normalization;
         public bool AutoUpdatePreview = false;
 
         //Number of vertices in one dimension of map
@@ -61,7 +62,7 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed);
+            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed, normalization);
             var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, TerrainDepthMultiplier, MeshHeightCurve, (int)LevelOfDetail, TerrainRegions);
             previewMeshFilter.sharedMesh.Clear();
             previewMeshFilter.sharedMesh = meshData.Create();

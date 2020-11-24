@@ -2,6 +2,11 @@
 
 namespace TerrainGeneration.Utils
 {
+    public enum NormalizationType
+    {
+        Local, Global
+    }
+
     public static class NoiseMapGenerator
     {
         private const int MaxRandomOffset = 10000;
@@ -16,7 +21,7 @@ namespace TerrainGeneration.Utils
         /// <param name="offsetY">perlin noise map position Y</param>
         /// <param name="seed">seed for random number generator</param>
         /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
-        public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, float offsetX, float offsetY, int seed)
+        public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
         {
             float halfWidth = width / 2f;
             float halfHeight = height / 2f;
@@ -48,7 +53,7 @@ namespace TerrainGeneration.Utils
                 }
             }
 
-            NormalizeValues(map);
+            NormalizeValues(map, normalizationType, noiseParams.OctavesAmount, noiseParams.Persistance);
             return map;
         }
 
@@ -68,21 +73,44 @@ namespace TerrainGeneration.Utils
             return array;
         }
 
-        private static void NormalizeValues(float[] array)
+        private static void NormalizeValues(float[] array, NormalizationType normalizationType, float octavesAmount, float persistance)
         {
-            float minValue = array[0];
-            float maxValue = array[0];
+            float minValue = 0f;
+            float maxValue = 0f;
 
-            for (int i = 1; i < array.Length; i++)
+            switch (normalizationType)
             {
-                if (array[i] > maxValue)
-                    maxValue = array[i];
-                if (array[i] < minValue)
-                    minValue = array[i];
+                case NormalizationType.Local:
+                    minValue = array[0];
+                    maxValue = array[0];
+                    for (int i = 1; i < array.Length; i++)
+                    {
+                        if (array[i] > maxValue)
+                            maxValue = array[i];
+                        if (array[i] < minValue)
+                            minValue = array[i];
+                    }
+                    break;
+
+                default:
+                case NormalizationType.Global:
+                    float amplitude = 1f;
+                    for (int i = 0; i < octavesAmount; i++)
+                    {
+                        maxValue += 0.5f * amplitude;
+                        minValue += -0.5f * amplitude;
+                        amplitude *= persistance;
+                    }
+                    minValue /= 1.65f;
+                    maxValue /= 1.65f;
+                    break;
             }
+
+            Debug.Log($"min: {minValue} max: {maxValue}");
 
             for (int i = 0; i < array.Length; i++)
             {
+                array[i] = Mathf.Clamp(array[i], minValue, maxValue);
                 array[i] = Mathf.InverseLerp(minValue, maxValue, array[i]);
             }
         }
