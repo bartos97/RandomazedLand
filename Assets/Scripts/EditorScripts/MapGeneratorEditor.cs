@@ -9,11 +9,11 @@ public class MapGeneratorEditor : Editor
     {
         var terrainMapGenerator = (MapGenerator)target;
         bool valueChanged = DrawDefaultInspector();
-        bool buttonClicked = GUILayout.Button("Generate map");
+        bool buttonClicked = GUILayout.Button("Generate mesh preview");
 
-        if ((terrainMapGenerator.AutoUpdate && valueChanged) || buttonClicked)
+        if ((terrainMapGenerator.AutoUpdatePreview && valueChanged) || buttonClicked)
         {
-            terrainMapGenerator.Generate();
+            terrainMapGenerator.GeneratePreview();
         }
     }
 }

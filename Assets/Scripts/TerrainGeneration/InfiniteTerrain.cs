@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using DataStructures;
+using System;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -7,48 +7,69 @@ namespace TerrainGeneration
 {
     public class InfiniteTerrain : MonoBehaviour
     {
-        public Transform player;
         public static MapGenerator mapGenerator;
+        public Transform playerObject;
         public Material material;
 
-        private const float maxViewDistance = 250f;
         private const int chunkSize = MapGenerator.MapChunkVerticesCount - 1;
-        private const int numOfVisibleChunksInViewDirection = (int)(maxViewDistance / chunkSize) + (maxViewDistance % chunkSize >= chunkSize / 2 ? 1 : 0); //round to closest int
+        private const float playerPositionThresholdForChunksUpdate = chunkSize / 2f;
+        private static readonly LodDistanceInfo[] lodDistances = { 
+            new LodDistanceInfo( LevelOfDetail._1, 250),
+            new LodDistanceInfo( LevelOfDetail._2, 500),
+            new LodDistanceInfo( LevelOfDetail._4, 750),
+        };
+
+        public static float maxViewDistance;
+        private readonly int numOfVisibleChunksInDirection;
 
         private readonly Dictionary<Vector2, TerrainChunk> chunksRepository = new Dictionary<Vector2, TerrainChunk>();
-        private readonly List<TerrainChunk> lastVisibleChunks = new List<TerrainChunk>();
+        private static readonly List<TerrainChunk> lastVisibleChunks = new List<TerrainChunk>();
+        public static Vector2 playerFlatPosition;
+        private Vector2 playerPreviousFlatPosition;
+
+        public InfiniteTerrain()
+        {
+            maxViewDistance = lodDistances[lodDistances.Length - 1].viewDistance;
+            numOfVisibleChunksInDirection = Mathf.RoundToInt(maxViewDistance / chunkSize);
+        }
 
         private void Start()
         {
             Assert.IsTrue(maxViewDistance > chunkSize);
             mapGenerator = FindObjectOfType<MapGenerator>();
-            player.position = Vector3.zero;
+            playerObject.position = Vector3.zero;
+            playerPreviousFlatPosition = new Vector2(playerPositionThresholdForChunksUpdate * 2, playerPositionThresholdForChunksUpdate * 2);
         }
 
         private void Update()
         {
-            UpdateVisibleChunks();
+            playerFlatPosition.x = playerObject.position.x;
+            playerFlatPosition.y = playerObject.position.z;
+            float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
+
+            if (playerDeltaPosition > playerPositionThresholdForChunksUpdate)
+            {
+                UpdateVisibleChunks();
+                playerPreviousFlatPosition.x = playerFlatPosition.x;
+                playerPreviousFlatPosition.y = playerFlatPosition.y;
+            }
         }
 
         private void UpdateVisibleChunks()
         {
             ClearLastChunks();
-            int xMiddleChunkCoord = Mathf.RoundToInt(player.position.x / chunkSize);
-            int yMiddleChunkCoord = Mathf.RoundToInt(player.position.z / chunkSize);
+            int xMiddleChunkCoord = Mathf.RoundToInt(playerFlatPosition.x / chunkSize);
+            int yMiddleChunkCoord = Mathf.RoundToInt(playerFlatPosition.y / chunkSize);
 
-            for (int yChunkCoordIter = -numOfVisibleChunksInViewDirection; yChunkCoordIter <= numOfVisibleChunksInViewDirection; yChunkCoordIter++)
+            for (int yChunkCoordIter = -numOfVisibleChunksInDirection; yChunkCoordIter <= numOfVisibleChunksInDirection; yChunkCoordIter++)
             {
-                for (int xChunkCoordIter = -numOfVisibleChunksInViewDirection; xChunkCoordIter <= numOfVisibleChunksInViewDirection; xChunkCoordIter++)
+                for (int xChunkCoordIter = -numOfVisibleChunksInDirection; xChunkCoordIter <= numOfVisibleChunksInDirection; xChunkCoordIter++)
                 {
                     var chunkCoords = new Vector2(xMiddleChunkCoord + xChunkCoordIter, yMiddleChunkCoord + yChunkCoordIter);
 
                     if (chunksRepository.ContainsKey(chunkCoords))
                     {
-                        chunksRepository[chunkCoords].UpdateVisibility(player.position, maxViewDistance);
-                        if (chunksRepository[chunkCoords].IsVisible)
-                        {
-                            lastVisibleChunks.Add(chunksRepository[chunkCoords]);
-                        }
+                        chunksRepository[chunkCoords].UpdateVisibility();
                     }
                     else
                     {
@@ -65,30 +86,52 @@ namespace TerrainGeneration
             lastVisibleChunks.Clear();
         }
 
+        private struct LodDistanceInfo
+        {
+            public LevelOfDetail lod;
+            public float viewDistance;
+
+            public LodDistanceInfo(LevelOfDetail lod, float viewDistance)
+            {
+                this.lod = lod;
+                this.viewDistance = viewDistance;
+            }
+        }
+
         private class TerrainChunk
         {
-            private readonly GameObject mesh;
+            private readonly GameObject meshObject;
             private readonly MeshRenderer meshRenderer;
             private readonly MeshFilter meshFilter;
-            private Vector3 positionInWorld;
-            private Bounds positionBounds;
-            private bool _isVisible;
+
+            private readonly LodMesh[] lodMeshes;
+            private readonly Vector3 positionInWorld;
+            private readonly Bounds positionBounds;
+
+            private bool _isVisible;            
+            private float[] noiseMap;
+            private bool hasNoiseMap = false;
 
             public TerrainChunk(Vector2 gridCoords, int size, Transform parentObject, Material material)
             {
                 positionInWorld = new Vector3(gridCoords.x * size, 0f, gridCoords.y * size);
                 positionBounds = new Bounds(positionInWorld, Vector3.one * size);
 
-                mesh = new GameObject("Terrain chunk");
-                meshRenderer = mesh.AddComponent<MeshRenderer>();
-                meshFilter = mesh.AddComponent<MeshFilter>();
+                meshObject = new GameObject($"Terrain chunk at ({gridCoords.x}, {gridCoords.y})");
+                meshRenderer = meshObject.AddComponent<MeshRenderer>();
+                meshFilter = meshObject.AddComponent<MeshFilter>();
 
                 meshRenderer.material = material;
-                mesh.transform.position = positionInWorld;
-                mesh.transform.parent = parentObject;
-                mesh.SetActive(true);
+                meshObject.transform.position = positionInWorld;
+                meshObject.transform.parent = parentObject;
 
-                mapGenerator.RequestNoiseMap(onNoiseMapReceive, positionInWorld.x, positionInWorld.z);
+                lodMeshes = new LodMesh[lodDistances.Length];
+                for (int i = 0; i < lodDistances.Length; i++)
+                {
+                    lodMeshes[i] = new LodMesh(lodDistances[i].lod, UpdateVisibility);
+                }
+
+                mapGenerator.RequestNoiseMap(OnNoiseMapReceive, positionInWorld.x, positionInWorld.z);
             }
 
             public bool IsVisible
@@ -97,24 +140,75 @@ namespace TerrainGeneration
                 set
                 {
                     _isVisible = value;
-                    mesh.SetActive(value);
+                    meshObject.SetActive(value);
                 }
             }
 
-            public void UpdateVisibility(Vector3 playerPosition, float maxViewDistance)
+            public void UpdateVisibility()
             {
-                float distanceFromPlayer = positionBounds.SqrDistance(playerPosition);
-                IsVisible = distanceFromPlayer <= maxViewDistance * maxViewDistance; //distanceFromPlayer is squared
+                if (!hasNoiseMap)
+                    return;
+
+                float sqrDistanceFromPlayer = positionBounds.SqrDistance(new Vector3(playerFlatPosition.x, 0f, playerFlatPosition.y));
+                IsVisible = sqrDistanceFromPlayer <= maxViewDistance * maxViewDistance;
+
+                if (!IsVisible)
+                    return;
+
+                int currentLodIndex = GetCurrentLodIndex(sqrDistanceFromPlayer);
+                if (lodMeshes[currentLodIndex].HasMesh)
+                    meshFilter.mesh = lodMeshes[currentLodIndex].Mesh;
+                else if (!lodMeshes[currentLodIndex].HasRequestedMesh)
+                    lodMeshes[currentLodIndex].MakeMeshRequest(noiseMap);
+
+                lastVisibleChunks.Add(this);
             }
 
-            private void onNoiseMapReceive(float[] noiseMap)
+            private int GetCurrentLodIndex(float sqrDistanceFromPlayer)
             {
-                mapGenerator.RequestMeshData(onMeshDataReceive, noiseMap);
+                for (int i = 0; i < lodDistances.Length; i++)
+                {
+                    if (sqrDistanceFromPlayer > lodDistances[i].viewDistance * lodDistances[i].viewDistance)
+                        continue;
+                    return i;
+                }
+
+                return lodDistances.Length - 1;
             }
 
-            private void onMeshDataReceive(MeshData meshData)
+            private void OnNoiseMapReceive(float[] noiseMap)
             {
-                meshFilter.mesh = meshData.Create();
+                this.noiseMap = noiseMap;
+                hasNoiseMap = true;
+                UpdateVisibility();
+            }
+        }
+
+        private class LodMesh
+        {
+            public readonly LevelOfDetail lod;
+            public Mesh Mesh { get; private set; }
+            public bool HasMesh { get; private set; } = false;
+            public bool HasRequestedMesh { get; private set; } = false;
+            private readonly Action onMeshDataReceivedCallback;
+
+            public LodMesh(LevelOfDetail lod, Action callback)
+            {
+                this.lod = lod;
+                this.onMeshDataReceivedCallback = callback;
+            }
+
+            public void MakeMeshRequest(float[] noiseMap)
+            {
+                HasRequestedMesh = true;
+                mapGenerator.RequestMeshData(OnMeshDataReceived, noiseMap, lod);
+            }
+
+            private void OnMeshDataReceived(MeshData meshData)
+            {
+                Mesh = meshData.Create();
+                HasMesh = true;
+                onMeshDataReceivedCallback();
             }
         }
     }
