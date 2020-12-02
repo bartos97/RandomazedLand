@@ -30,8 +30,8 @@ namespace TerrainGeneration
 
         public void OnUpdate()
         {
-            playerFlatPosition.x = mapGenerator.playerObject.position.x;
-            playerFlatPosition.y = mapGenerator.playerObject.position.z;
+            playerFlatPosition.x = mapGenerator.playerObject.position.x / LevelOfDetailConfig.terrainScale;
+            playerFlatPosition.y = mapGenerator.playerObject.position.z / LevelOfDetailConfig.terrainScale;
             float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
 
             if (playerDeltaPosition > LevelOfDetailConfig.playerPositionThresholdForChunksUpdate)
@@ -76,6 +76,7 @@ namespace TerrainGeneration
             private readonly GameObject meshObject;
             private readonly MeshRenderer meshRenderer;
             private readonly MeshFilter meshFilter;
+            private readonly MeshCollider meshCollider;
             private readonly InfiniteTerrain superiorObjectRef;
 
             private readonly LodMesh[] lodMeshes;
@@ -96,9 +97,11 @@ namespace TerrainGeneration
                 meshObject = new GameObject($"Terrain chunk at ({gridCoords.x}, {gridCoords.y})");
                 meshRenderer = meshObject.AddComponent<MeshRenderer>();
                 meshFilter = meshObject.AddComponent<MeshFilter>();
+                meshCollider = meshObject.AddComponent<MeshCollider>();
 
                 meshRenderer.material = superiorObjectRef.mapGenerator.meshMaterial;
-                meshObject.transform.position = positionInWorld;
+                meshObject.transform.position = positionInWorld * LevelOfDetailConfig.terrainScale;
+                meshObject.transform.localScale = Vector3.one * LevelOfDetailConfig.terrainScale;
                 meshObject.transform.parent = superiorObjectRef.mapGenerator.transform;
 
                 lodMeshes = new LodMesh[LevelOfDetailConfig.distanceThresholds.Length];
@@ -132,16 +135,22 @@ namespace TerrainGeneration
                 superiorObjectRef.lastVisibleChunks.Add(this);
 
                 if (lodMeshes[currentLodIndex].HasMesh)
+                {
                     meshFilter.mesh = lodMeshes[currentLodIndex].Mesh;
+                    meshCollider.sharedMesh = lodMeshes[currentLodIndex].Mesh;
+                }
                 else if (!lodMeshes[currentLodIndex].HasRequestedMesh)
+                {
                     lodMeshes[currentLodIndex].MakeMeshRequest(noiseMap);
+                }
             }
 
             private int GetCurrentLodIndex(float sqrDistanceFromPlayer)
             {
                 for (int i = 0; i < LevelOfDetailConfig.distanceThresholds.Length; i++)
                 {
-                    if (sqrDistanceFromPlayer > LevelOfDetailConfig.distanceThresholds[i].viewDistance * LevelOfDetailConfig.distanceThresholds[i].viewDistance)
+                    float dist = LevelOfDetailConfig.distanceThresholds[i].viewDistance / LevelOfDetailConfig.terrainScale;
+                    if (sqrDistanceFromPlayer > dist * dist)
                         continue;
                     return i;
                 }

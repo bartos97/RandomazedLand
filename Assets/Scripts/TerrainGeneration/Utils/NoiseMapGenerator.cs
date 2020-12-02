@@ -101,12 +101,12 @@ namespace TerrainGeneration.Utils
                         minValue += -0.5f * amplitude;
                         amplitude *= persistance;
                     }
-                    minValue /= 1.65f;
-                    maxValue /= 1.65f;
+                    minValue /= 1.5f;
+                    maxValue /= 1.5f;
                     break;
             }
 
-            Debug.Log($"min: {minValue} max: {maxValue}");
+            //Debug.Log($"min: {minValue} max: {maxValue}");
 
             for (int i = 0; i < array.Length; i++)
             {
