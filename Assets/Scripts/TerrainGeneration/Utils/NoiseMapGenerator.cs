@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TerrainGeneration.Structs;
+using UnityEngine;
 
 namespace TerrainGeneration.Utils
 {
@@ -10,6 +11,11 @@ namespace TerrainGeneration.Utils
     public static class NoiseMapGenerator
     {
         private const int MaxRandomOffset = 10000;
+
+        public static float[] GenerateMap(int size, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
+        {
+            return GenerateMap(size, size, noiseParams, offsetX, offsetY, seed, normalizationType);
+        }
 
         /// <summary>
         /// Generates height map based on Perlin Noise
@@ -59,7 +65,6 @@ namespace TerrainGeneration.Utils
 
         private static Vector2[] GenerateRandomOffsets(int amount, float constX = 0f, float constY = 0f, int seed = 0)
         {
-            seed = seed == 0 ? (int)System.DateTime.Now.Ticks : seed;
             var rand = new System.Random(seed);
             var array = new Vector2[amount];
 
@@ -101,8 +106,8 @@ namespace TerrainGeneration.Utils
                         minValue += -0.5f * amplitude;
                         amplitude *= persistance;
                     }
-                    minValue /= 1.5f;
-                    maxValue /= 1.5f;
+                    minValue /= 1.35f;
+                    maxValue /= 1.35f;
                     break;
             }
 

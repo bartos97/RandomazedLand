@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Threading;
 using System.Collections.Concurrent;
+using TerrainGeneration.Structs;
 
 namespace TerrainGeneration
 {   
@@ -12,14 +13,12 @@ namespace TerrainGeneration
 
         [Header("Noise settings")]
         public int seed = 0;
-        public NoiseParams noiseParams = NoiseParams.CreateWithDefaults();
+        public NoiseParams noiseParameters = NoiseParams.CreateWithDefaults();
 
         [Header("Terrain settings")]
         [Min(1)]
         public Material meshMaterial;
-        public int TerrainDepthMultiplier = 20;
-        public Gradient TerrainRegions;
-        public AnimationCurve MeshHeightCurve;
+        public TerrainParams terrainParameters = new TerrainParams();
 
         [Header("Mesh preview")]
         public GameObject previewMesh;
@@ -47,6 +46,7 @@ namespace TerrainGeneration
         public void Start()
         {
             previewMesh.SetActive(false);
+            seed = seed == 0 ? GetRandomSeed() : seed;
         }
 
         public void Update()
@@ -62,17 +62,18 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed, normalization);
-            var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, TerrainDepthMultiplier, MeshHeightCurve, (int)LevelOfDetail, TerrainRegions);
+            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, noiseParameters, offsetX, offsetY, seed == 0 ? GetRandomSeed() : seed, normalization);
+            var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, terrainParameters, (int)LevelOfDetail);
             previewMeshFilter.sharedMesh.Clear();
             previewMeshFilter.sharedMesh = meshData.Create();
+            previewMesh.transform.localScale = Vector3.one * terrainParameters.UniformScaleMultiplier;
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY)
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, MapChunkVerticesCount, noiseParams, offsetX, offsetY, seed);
+                float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, noiseParameters, offsetX, offsetY, seed);
                 noiseMapQueue.Enqueue(new MapThreadData<float[]>(callback, noiseMap));
             });
 
@@ -83,11 +84,16 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, TerrainDepthMultiplier, MeshHeightCurve, (int)lod, TerrainRegions);
+                var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, terrainParameters, (int)lod);
                 meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
             });
 
             th.Start();
+        }
+
+        private int GetRandomSeed()
+        {
+            return new System.Random().Next();
         }
 
         private struct MapThreadData<T>

@@ -30,8 +30,8 @@ namespace TerrainGeneration
 
         public void OnUpdate()
         {
-            playerFlatPosition.x = mapGenerator.playerObject.position.x / LevelOfDetailConfig.terrainScale;
-            playerFlatPosition.y = mapGenerator.playerObject.position.z / LevelOfDetailConfig.terrainScale;
+            playerFlatPosition.x = mapGenerator.playerObject.position.x;
+            playerFlatPosition.y = mapGenerator.playerObject.position.z;
             float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
 
             if (playerDeltaPosition > LevelOfDetailConfig.playerPositionThresholdForChunksUpdate)
@@ -80,6 +80,7 @@ namespace TerrainGeneration
             private readonly InfiniteTerrain superiorObjectRef;
 
             private readonly LodMesh[] lodMeshes;
+            private readonly LodMesh colliderLodMesh;
             private readonly Vector3 positionInWorld;
             private readonly Bounds positionBounds;
 
@@ -100,8 +101,8 @@ namespace TerrainGeneration
                 meshCollider = meshObject.AddComponent<MeshCollider>();
 
                 meshRenderer.material = superiorObjectRef.mapGenerator.meshMaterial;
-                meshObject.transform.position = positionInWorld * LevelOfDetailConfig.terrainScale;
-                meshObject.transform.localScale = Vector3.one * LevelOfDetailConfig.terrainScale;
+                meshObject.transform.position = positionInWorld * superiorObjectRef.mapGenerator.terrainParameters.UniformScaleMultiplier;
+                meshObject.transform.localScale = Vector3.one * superiorObjectRef.mapGenerator.terrainParameters.UniformScaleMultiplier;
                 meshObject.transform.parent = superiorObjectRef.mapGenerator.transform;
 
                 lodMeshes = new LodMesh[LevelOfDetailConfig.distanceThresholds.Length];
@@ -109,6 +110,7 @@ namespace TerrainGeneration
                 {
                     lodMeshes[i] = new LodMesh(LevelOfDetailConfig.distanceThresholds[i].lod, UpdateVisibility, superiorObjectRef.mapGenerator.RequestMeshData);
                 }
+                colliderLodMesh = lodMeshes[LevelOfDetailConfig.lodDistanceIndexForCollider];
 
                 superiorObjectRef.mapGenerator.RequestNoiseMap(OnNoiseMapReceive, positionInWorld.x, positionInWorld.z);
             }
@@ -118,6 +120,8 @@ namespace TerrainGeneration
                 get { return _isVisible; }
                 set
                 {
+                    if (value == _isVisible)
+                        return;
                     _isVisible = value;
                     meshObject.SetActive(value);
                 }
@@ -137,11 +141,22 @@ namespace TerrainGeneration
                 if (lodMeshes[currentLodIndex].HasMesh)
                 {
                     meshFilter.mesh = lodMeshes[currentLodIndex].Mesh;
-                    meshCollider.sharedMesh = lodMeshes[currentLodIndex].Mesh;
                 }
                 else if (!lodMeshes[currentLodIndex].HasRequestedMesh)
                 {
                     lodMeshes[currentLodIndex].MakeMeshRequest(noiseMap);
+                }
+
+                if (currentLodIndex == 0)
+                {
+                    if (colliderLodMesh.HasMesh)
+                    {
+                        meshCollider.sharedMesh = colliderLodMesh.Mesh;
+                    }
+                    else if (!colliderLodMesh.HasRequestedMesh)
+                    {
+                        colliderLodMesh.MakeMeshRequest(noiseMap);
+                    }
                 }
             }
 
@@ -149,7 +164,7 @@ namespace TerrainGeneration
             {
                 for (int i = 0; i < LevelOfDetailConfig.distanceThresholds.Length; i++)
                 {
-                    float dist = LevelOfDetailConfig.distanceThresholds[i].viewDistance / LevelOfDetailConfig.terrainScale;
+                    float dist = LevelOfDetailConfig.distanceThresholds[i].viewDistance;
                     if (sqrDistanceFromPlayer > dist * dist)
                         continue;
                     return i;
