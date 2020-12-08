@@ -16,37 +16,37 @@ namespace TerrainGeneration
         public NoiseParams noiseParameters = NoiseParams.CreateWithDefaults();
 
         [Header("Terrain settings")]
-        [Min(1)]
         public Material meshMaterial;
         public TerrainParams terrainParameters = new TerrainParams();
 
         [Header("Mesh preview")]
         public GameObject previewMesh;
-        public MeshFilter previewMeshFilter;
-        public MeshRenderer previewMeshRenderer;
         public float offsetX = 0f;
         public float offsetY = 0f;
         public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
         public Utils.NormalizationType normalization;
-        public bool AutoUpdatePreview = false;
+        public bool autoUpdatePreview = false;
 
         //Number of vertices in one dimension of map
-        private const int MapChunkVerticesCount = LevelOfDetailConfig.chunkSize + 1;
+        private const int mapChunkVerticesPerLine = LevelOfDetailConfig.chunkSize + 1;
 
         private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
         private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
 
-        private readonly InfiniteTerrain infiniteTerrain;
+        private InfiniteTerrain infiniteTerrain;
+        private readonly System.Random prng;
 
         public MapGenerator()
         {
-            infiniteTerrain = new InfiniteTerrain(this);
+            prng = new System.Random();
         }
 
         public void Start()
         {
             previewMesh.SetActive(false);
-            seed = seed == 0 ? GetRandomSeed() : seed;
+            infiniteTerrain = new InfiniteTerrain(this);
+            if (seed == 0)
+                seed = prng.Next();
         }
 
         public void Update()
@@ -62,10 +62,12 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, noiseParameters, offsetX, offsetY, seed == 0 ? GetRandomSeed() : seed, normalization);
-            var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, terrainParameters, (int)LevelOfDetail);
+            float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed == 0 ? prng.Next() : seed, normalization);
+            var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParameters, (int)LevelOfDetail);
+            var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
+
             previewMeshFilter.sharedMesh.Clear();
-            previewMeshFilter.sharedMesh = meshData.Create();
+            previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
             previewMesh.transform.localScale = Vector3.one * terrainParameters.UniformScaleMultiplier;
         }
 
@@ -73,7 +75,7 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = Utils.NoiseMapGenerator.GenerateMap(MapChunkVerticesCount, noiseParameters, offsetX, offsetY, seed);
+                float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed);
                 noiseMapQueue.Enqueue(new MapThreadData<float[]>(callback, noiseMap));
             });
 
@@ -84,16 +86,11 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                var meshData = Utils.MeshGenerator.GenerateFromHeightMap(noiseMap, MapChunkVerticesCount, terrainParameters, (int)lod);
+                var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParameters, (int)lod);
                 meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
             });
 
             th.Start();
-        }
-
-        private int GetRandomSeed()
-        {
-            return new System.Random().Next();
         }
 
         private struct MapThreadData<T>

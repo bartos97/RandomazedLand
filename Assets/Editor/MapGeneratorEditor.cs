@@ -11,7 +11,7 @@ public class MapGeneratorEditor : Editor
         bool valueChanged = DrawDefaultInspector();
         bool buttonClicked = GUILayout.Button("Generate mesh preview");
 
-        if ((terrainMapGenerator.AutoUpdatePreview && valueChanged) || buttonClicked)
+        if ((terrainMapGenerator.autoUpdatePreview && valueChanged) || buttonClicked)
         {
             terrainMapGenerator.GeneratePreview();
         }

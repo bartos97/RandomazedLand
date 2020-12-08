@@ -12,32 +12,26 @@ namespace TerrainGeneration.Utils
     {
         private const int MaxRandomOffset = 10000;
 
-        public static float[] GenerateMap(int size, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
-        {
-            return GenerateMap(size, size, noiseParams, offsetX, offsetY, seed, normalizationType);
-        }
-
         /// <summary>
         /// Generates height map based on Perlin Noise
         /// </summary>
-        /// <param name="width">map width (X axis)</param>
-        /// <param name="height">map height (Z axis)</param>
+        /// <param name="sideLength">width and height of map</param>
         /// <param name="noiseParams">parameters for noise generation</param>
         /// <param name="offsetX">perlin noise map position X</param>
         /// <param name="offsetY">perlin noise map position Y</param>
         /// <param name="seed">seed for random number generator</param>
         /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
-        public static float[] GenerateMap(int width, int height, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
+        public static float[] GenerateFromPerlinNoise(int sideLength, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
         {
-            float halfWidth = width / 2f;
-            float halfHeight = height / 2f;
-            float[] map = new float[width * height];
+            float halfWidth = sideLength / 2f;
+            float halfHeight = sideLength / 2f;
+            float[] map = new float[sideLength * sideLength];
             Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.OctavesAmount, offsetX, offsetY, seed);
 
             int mapIndex = 0;
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < sideLength; y++)
             {
-                for (int x = 0; x < width; x++)
+                for (int x = 0; x < sideLength; x++)
                 {
                     float amplitude = 1f;
                     float frequency = 1f;

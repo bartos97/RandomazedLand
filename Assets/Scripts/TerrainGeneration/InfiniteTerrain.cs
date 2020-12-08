@@ -21,7 +21,7 @@ namespace TerrainGeneration
             Assert.IsTrue(LevelOfDetailConfig.maxViewDistance > LevelOfDetailConfig.chunkSize);
 
             this.mapGenerator = mapGenerator;
-            numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / LevelOfDetailConfig.chunkSize);
+            numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / LevelOfDetailConfig.chunkSize / mapGenerator.terrainParameters.UniformScaleMultiplier);
             playerFlatPosition = new Vector2(0, 0);
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
             chunksRepository = new Dictionary<Vector2, TerrainChunk>();
@@ -30,8 +30,8 @@ namespace TerrainGeneration
 
         public void OnUpdate()
         {
-            playerFlatPosition.x = mapGenerator.playerObject.position.x;
-            playerFlatPosition.y = mapGenerator.playerObject.position.z;
+            playerFlatPosition.x = mapGenerator.playerObject.position.x / mapGenerator.terrainParameters.UniformScaleMultiplier;
+            playerFlatPosition.y = mapGenerator.playerObject.position.z / mapGenerator.terrainParameters.UniformScaleMultiplier;
             float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
 
             if (playerDeltaPosition > LevelOfDetailConfig.playerPositionThresholdForChunksUpdate)
@@ -87,6 +87,7 @@ namespace TerrainGeneration
             private bool _isVisible;            
             private float[] noiseMap;
             private bool hasNoiseMap = false;
+            private const int halfChunk = LevelOfDetailConfig.chunkSize / 2;
 
             public TerrainChunk(Vector2 gridCoords, InfiniteTerrain superior)
             {
@@ -149,7 +150,7 @@ namespace TerrainGeneration
 
                 if (currentLodIndex == 0)
                 {
-                    if (colliderLodMesh.HasMesh)
+                    if (colliderLodMesh.HasMesh && meshCollider.sharedMesh == null)
                     {
                         meshCollider.sharedMesh = colliderLodMesh.Mesh;
                     }
@@ -206,7 +207,7 @@ namespace TerrainGeneration
 
             private void OnMeshDataReceived(MeshData meshData)
             {
-                Mesh = meshData.Create();
+                Mesh = meshData.GetUnityMesh();
                 HasMesh = true;
                 onMeshDataReceivedCallback();
             }
