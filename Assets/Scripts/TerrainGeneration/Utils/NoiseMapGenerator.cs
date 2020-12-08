@@ -48,15 +48,14 @@ namespace TerrainGeneration.Utils
                         frequency *= noiseParams.Lacunarity;
                     }
 
-                    map[mapIndex] = noiseHeight;
-                    mapIndex++;
+                    map[mapIndex++] = noiseHeight;
                 }
             }
 
             NormalizeValues(map, normalizationType, noiseParams.OctavesAmount, noiseParams.Persistance);
             return map;
         }
-
+        
         private static Vector2[] GenerateRandomOffsets(int amount, float constX = 0f, float constY = 0f, int seed = 0)
         {
             var rand = new System.Random(seed);
@@ -105,13 +104,37 @@ namespace TerrainGeneration.Utils
                     break;
             }
 
-            //Debug.Log($"min: {minValue} max: {maxValue}");
-
             for (int i = 0; i < array.Length; i++)
             {
                 array[i] = Mathf.Clamp(array[i], minValue, maxValue);
                 array[i] = Mathf.InverseLerp(minValue, maxValue, array[i]);
             }
+        }
+
+        public static float[] GenerateFalloffMap(int sideLength)
+        {
+            float[] map = new float[sideLength * sideLength];
+
+            int mapIndex = 0;
+            for (int y = 0; y < sideLength; y++)
+            {
+                for (int x = 0; x < sideLength; x++)
+                {
+                    float xValue = x / (float)sideLength * 2 - 1;
+                    float yValue = y / (float)sideLength * 2 - 1;
+                    float val = Mathf.Max(Mathf.Abs(xValue), Mathf.Abs(yValue));
+                    map[mapIndex++] = EvaluateFalloffValue(val);
+                }
+            }
+
+            return map;
+        }
+
+        private static float EvaluateFalloffValue(float value)
+        {
+            const float a = 3f;
+            const float b = 2.5f;
+            return Mathf.Pow(value, a) / (Mathf.Pow(value, a) + Mathf.Pow(b - b * value, a));
         }
     }
 }

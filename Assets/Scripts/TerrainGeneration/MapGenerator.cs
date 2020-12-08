@@ -6,6 +6,13 @@ using TerrainGeneration.Structs;
 
 namespace TerrainGeneration
 {   
+    public enum DisplayType
+    {
+        Mesh,
+        NoiseMap,
+        FalloffMap
+    }
+
     public class MapGenerator : MonoBehaviour
     {
         [Header("Gameplay stuff")]
@@ -17,10 +24,13 @@ namespace TerrainGeneration
 
         [Header("Terrain settings")]
         public Material meshMaterial;
+        public bool useFalloffMap = false;
         public TerrainParams terrainParameters = new TerrainParams();
 
-        [Header("Mesh preview")]
+        [Header("Preview settings")]
+        public DisplayType displayType = DisplayType.Mesh;
         public GameObject previewMesh;
+        public GameObject previewTexture;
         public float offsetX = 0f;
         public float offsetY = 0f;
         public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
@@ -35,15 +45,18 @@ namespace TerrainGeneration
 
         private InfiniteTerrain infiniteTerrain;
         private readonly System.Random prng;
+        private readonly float[] falloffMap;
 
         public MapGenerator()
         {
             prng = new System.Random();
+            falloffMap = Utils.NoiseMapGenerator.GenerateFalloffMap(mapChunkVerticesPerLine + 2);
         }
 
         public void Start()
         {
             previewMesh.SetActive(false);
+            previewTexture.SetActive(false);
             infiniteTerrain = new InfiniteTerrain(this);
             if (seed == 0)
                 seed = prng.Next();
@@ -62,13 +75,45 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed == 0 ? prng.Next() : seed, normalization);
+            var noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed == 0 ? prng.Next() : seed, normalization);
+
+            switch (displayType)
+            {
+                default:
+                case DisplayType.Mesh: 
+                    DisplayMeshPreview(noiseMap);
+                    break;
+                case DisplayType.NoiseMap:
+                    DisplayTexturePreview(noiseMap); 
+                    break;
+                case DisplayType.FalloffMap:
+                    DisplayTexturePreview(falloffMap); 
+                    break;
+            }
+        }
+
+        private void DisplayMeshPreview(float[] noiseMap)
+        {
+            if (useFalloffMap)
+            {
+                for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
+                {
+                    noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
+                }
+            }
+
             var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParameters, (int)LevelOfDetail);
             var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
-
             previewMeshFilter.sharedMesh.Clear();
             previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
             previewMesh.transform.localScale = Vector3.one * terrainParameters.UniformScaleMultiplier;
+        }
+
+        private void DisplayTexturePreview(float[] noiseMap)
+        {
+            var tex = Utils.TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLine + 2, mapChunkVerticesPerLine + 2);
+            var texRenderer = previewTexture.GetComponent<MeshRenderer>();
+            texRenderer.sharedMaterial.mainTexture = tex;
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY)
@@ -76,6 +121,13 @@ namespace TerrainGeneration
             var th = new Thread(() =>
             {
                 float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed);
+                if (useFalloffMap)
+                {
+                    for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
+                    {
+                        noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
+                    }
+                }
                 noiseMapQueue.Enqueue(new MapThreadData<float[]>(callback, noiseMap));
             });
 
