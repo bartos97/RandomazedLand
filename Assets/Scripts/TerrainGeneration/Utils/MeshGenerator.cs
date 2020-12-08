@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
-using TerrainGeneration.Structs;
+using TerrainGeneration.ScriptableObjects;
 
 namespace TerrainGeneration.Utils
 {

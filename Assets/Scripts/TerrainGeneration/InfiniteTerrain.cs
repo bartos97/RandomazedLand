@@ -2,6 +2,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
+using TerrainGeneration.Utils;
 
 namespace TerrainGeneration
 {
@@ -21,7 +22,7 @@ namespace TerrainGeneration
             Assert.IsTrue(LevelOfDetailConfig.maxViewDistance > LevelOfDetailConfig.chunkSize);
 
             this.mapGenerator = mapGenerator;
-            numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / LevelOfDetailConfig.chunkSize / mapGenerator.terrainParameters.UniformScaleMultiplier);
+            numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / LevelOfDetailConfig.chunkSize / mapGenerator.terrainParams.UniformScaleMultiplier);
             playerFlatPosition = new Vector2(0, 0);
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
             chunksRepository = new Dictionary<Vector2, TerrainChunk>();
@@ -30,8 +31,8 @@ namespace TerrainGeneration
 
         public void OnUpdate()
         {
-            playerFlatPosition.x = mapGenerator.playerObject.position.x / mapGenerator.terrainParameters.UniformScaleMultiplier;
-            playerFlatPosition.y = mapGenerator.playerObject.position.z / mapGenerator.terrainParameters.UniformScaleMultiplier;
+            playerFlatPosition.x = mapGenerator.playerObject.position.x / mapGenerator.terrainParams.UniformScaleMultiplier;
+            playerFlatPosition.y = mapGenerator.playerObject.position.z / mapGenerator.terrainParams.UniformScaleMultiplier;
             float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
 
             if (playerDeltaPosition > LevelOfDetailConfig.playerPositionThresholdForChunksUpdate)
@@ -102,8 +103,8 @@ namespace TerrainGeneration
                 meshCollider = meshObject.AddComponent<MeshCollider>();
 
                 meshRenderer.material = superiorObjectRef.mapGenerator.meshMaterial;
-                meshObject.transform.position = positionInWorld * superiorObjectRef.mapGenerator.terrainParameters.UniformScaleMultiplier;
-                meshObject.transform.localScale = Vector3.one * superiorObjectRef.mapGenerator.terrainParameters.UniformScaleMultiplier;
+                meshObject.transform.position = positionInWorld * superiorObjectRef.mapGenerator.terrainParams.UniformScaleMultiplier;
+                meshObject.transform.localScale = Vector3.one * superiorObjectRef.mapGenerator.terrainParams.UniformScaleMultiplier;
                 meshObject.transform.parent = superiorObjectRef.mapGenerator.transform;
 
                 lodMeshes = new LodMesh[LevelOfDetailConfig.distanceThresholds.Length];

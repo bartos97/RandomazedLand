@@ -2,7 +2,8 @@
 using UnityEngine;
 using System.Threading;
 using System.Collections.Concurrent;
-using TerrainGeneration.Structs;
+using TerrainGeneration.ScriptableObjects;
+using TerrainGeneration.Utils;
 
 namespace TerrainGeneration
 {   
@@ -19,13 +20,11 @@ namespace TerrainGeneration
         public Transform playerObject;        
 
         [Header("Noise settings")]
-        public int seed = 0;
-        public NoiseParams noiseParameters = NoiseParams.CreateWithDefaults();
+        public NoiseParams noiseParams;
 
         [Header("Terrain settings")]
         public Material meshMaterial;
-        public bool useFalloffMap = false;
-        public TerrainParams terrainParameters = new TerrainParams();
+        public TerrainParams terrainParams;
 
         [Header("Preview settings")]
         public DisplayType displayType = DisplayType.Mesh;
@@ -58,8 +57,8 @@ namespace TerrainGeneration
             previewMesh.SetActive(false);
             previewTexture.SetActive(false);
             infiniteTerrain = new InfiniteTerrain(this);
-            if (seed == 0)
-                seed = prng.Next();
+            if (noiseParams.seed == 0)
+                noiseParams.seed = prng.Next();
         }
 
         public void Update()
@@ -75,7 +74,7 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            var noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed == 0 ? prng.Next() : seed, normalization);
+            var noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
 
             switch (displayType)
             {
@@ -94,7 +93,7 @@ namespace TerrainGeneration
 
         private void DisplayMeshPreview(float[] noiseMap)
         {
-            if (useFalloffMap)
+            if (terrainParams.useFalloffMap)
             {
                 for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
                 {
@@ -102,11 +101,11 @@ namespace TerrainGeneration
                 }
             }
 
-            var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParameters, (int)LevelOfDetail);
+            var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)LevelOfDetail);
             var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
             previewMeshFilter.sharedMesh.Clear();
             previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
-            previewMesh.transform.localScale = Vector3.one * terrainParameters.UniformScaleMultiplier;
+            previewMesh.transform.localScale = Vector3.one * terrainParams.UniformScaleMultiplier;
         }
 
         private void DisplayTexturePreview(float[] noiseMap)
@@ -120,8 +119,8 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParameters, offsetX, offsetY, seed);
-                if (useFalloffMap)
+                float[] noiseMap = Utils.NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, noiseParams.seed);
+                if (terrainParams.useFalloffMap)
                 {
                     for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
                     {
@@ -138,7 +137,7 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParameters, (int)lod);
+                var meshData = Utils.MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)lod);
                 meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
             });
 

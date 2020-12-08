@@ -1,4 +1,4 @@
-﻿using TerrainGeneration.Structs;
+﻿using TerrainGeneration.ScriptableObjects;
 using UnityEngine;
 
 namespace TerrainGeneration.Utils
@@ -26,7 +26,7 @@ namespace TerrainGeneration.Utils
             float halfWidth = sideLength / 2f;
             float halfHeight = sideLength / 2f;
             float[] map = new float[sideLength * sideLength];
-            Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.OctavesAmount, offsetX, offsetY, seed);
+            Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.octavesAmount, offsetX, offsetY, seed);
 
             int mapIndex = 0;
             for (int y = 0; y < sideLength; y++)
@@ -37,22 +37,22 @@ namespace TerrainGeneration.Utils
                     float frequency = 1f;
                     float noiseHeight = 0f;
 
-                    for (int i = 0; i < noiseParams.OctavesAmount; i++)
+                    for (int i = 0; i < noiseParams.octavesAmount; i++)
                     {
-                        float xPerlinCoord = ((float)x - halfWidth + octavesOffsets[i].x) / noiseParams.Scale * frequency;
-                        float yPerlinCoord = ((float)y - halfHeight + octavesOffsets[i].y) / noiseParams.Scale * frequency;
+                        float xPerlinCoord = ((float)x - halfWidth + octavesOffsets[i].x) / noiseParams.scale * frequency;
+                        float yPerlinCoord = ((float)y - halfHeight + octavesOffsets[i].y) / noiseParams.scale * frequency;
                         float noiseValue = Mathf.PerlinNoise(xPerlinCoord, yPerlinCoord) - 0.5f;
 
                         noiseHeight += noiseValue * amplitude;
-                        amplitude *= noiseParams.Persistance;
-                        frequency *= noiseParams.Lacunarity;
+                        amplitude *= noiseParams.persistance;
+                        frequency *= noiseParams.lacunarity;
                     }
 
                     map[mapIndex++] = noiseHeight;
                 }
             }
 
-            NormalizeValues(map, normalizationType, noiseParams.OctavesAmount, noiseParams.Persistance);
+            NormalizeValues(map, normalizationType, noiseParams.octavesAmount, noiseParams.persistance);
             return map;
         }
         

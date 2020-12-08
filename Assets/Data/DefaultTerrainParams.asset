@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
+  m_Name: DefaultTerrainParams
+  m_EditorClassIdentifier: 
+  useFalloffMap: 0
+  DepthMultiplier: 44
+  UniformScaleMultiplier: 1
+  ColorRegions:
+    serializedVersion: 2
+    key0: {r: 0.13542001, g: 0.47285014, b: 0.915, a: 1}
+    key1: {r: 0.35076728, g: 0.5421332, b: 0.7169479, a: 1}
+    key2: {r: 0.84400004, g: 0.7008195, b: 0.263328, a: 0}
+    key3: {r: 0.19256471, g: 0.3882353, b: 0.21457765, a: 0}
+    key4: {r: 0.07448999, g: 0.39, b: 0.1111117, a: 0}
+    key5: {r: 0.36200002, g: 0.20826969, b: 0.087242, a: 0}
+    key6: {r: 1, g: 1, b: 1, a: 0}
+    key7: {r: 1, g: 1, b: 1, a: 0}
+    ctime0: 8481
+    ctime1: 24479
+    ctime2: 29491
+    ctime3: 35081
+    ctime4: 45296
+    ctime5: 52235
+    ctime6: 57440
+    ctime7: 65535
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 8
+    m_NumAlphaKeys: 2
+  MeshHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.43349326
+      value: -0.004849235
+      inSlope: 0.063593596
+      outSlope: 0.063593596
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.12228828
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
