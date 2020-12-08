@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefaultTerrainParams
   m_EditorClassIdentifier: 
   useFalloffMap: 0
-  DepthMultiplier: 44
+  DepthMultiplier: 155
   UniformScaleMultiplier: 1
   ColorRegions:
     serializedVersion: 2

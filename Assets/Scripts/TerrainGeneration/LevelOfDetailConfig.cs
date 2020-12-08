@@ -5,9 +5,10 @@
         public static readonly LodDistance[] distanceThresholds = {
             new LodDistance( LevelOfDetail._1, 180),
             new LodDistance( LevelOfDetail._2, 250),
-            new LodDistance( LevelOfDetail._4, 800),
-            new LodDistance( LevelOfDetail._24, 1500),
-            new LodDistance( LevelOfDetail._80, 3000),
+            //new LodDistance( LevelOfDetail._4, 800),
+            new LodDistance( LevelOfDetail._4, 1500),
+            new LodDistance( LevelOfDetail._24, 4000),
+            //new LodDistance( LevelOfDetail._80, 5000),
         };
 
         public const int chunkSize = 240;
