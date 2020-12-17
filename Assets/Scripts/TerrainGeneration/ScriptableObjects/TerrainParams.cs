@@ -3,9 +3,8 @@
 namespace TerrainGeneration.ScriptableObjects
 {
     [CreateAssetMenu(fileName = "New terrain params", menuName = "Terrain generation/Terrain parameters")]
-    public class TerrainParams : ScriptableObject
+    public class TerrainParams : UpdatableData
     {
-        public bool useFalloffMap;
         [Min(1)]
         public int DepthMultiplier;
         [Min(0f)]

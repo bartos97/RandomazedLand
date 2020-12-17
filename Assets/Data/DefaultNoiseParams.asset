@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefaultNoiseParams
   m_EditorClassIdentifier: 
   seed: 0
-  scale: 300
+  scale: 100
   persistance: 0.136
   lacunarity: 5.84
   octavesAmount: 4

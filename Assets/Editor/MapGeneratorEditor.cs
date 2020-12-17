@@ -7,13 +7,13 @@ public class MapGeneratorEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        var terrainMapGenerator = (MapGenerator)target;
+        var mapGenerator = (MapGenerator)target;
         bool valueChanged = DrawDefaultInspector();
-        bool buttonClicked = GUILayout.Button("Generate mesh preview");
+        bool buttonClicked = GUILayout.Button("Generate preview");
 
-        if ((terrainMapGenerator.autoUpdatePreview && valueChanged) || buttonClicked)
+        if (!Application.isPlaying && ((mapGenerator.autoUpdatePreview && valueChanged) || buttonClicked))
         {
-            terrainMapGenerator.GeneratePreview();
+            mapGenerator.GeneratePreview();
         }
     }
 }

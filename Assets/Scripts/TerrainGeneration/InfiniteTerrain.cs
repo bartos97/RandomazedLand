@@ -10,23 +10,27 @@ namespace TerrainGeneration
     {
         private readonly MapGenerator mapGenerator;
 
-        private readonly Dictionary<Vector2, TerrainChunk> chunksRepository;
-        private readonly List<TerrainChunk> lastVisibleChunks;
+        private Dictionary<Vector2, TerrainChunk> chunksRepository;
+        private List<TerrainChunk> lastVisibleChunks;
 
-        private readonly int numOfVisibleChunksInDirection;
+        private int numOfVisibleChunksInDirection;
         private Vector2 playerFlatPosition = new Vector2(0, 0);
         private Vector2 playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
 
         public InfiniteTerrain(MapGenerator mapGenerator)
         {
             Assert.IsTrue(LevelOfDetailConfig.maxViewDistance > LevelOfDetailConfig.chunkSize);
-
             this.mapGenerator = mapGenerator;
+        }
+
+        public void OnStart()
+        {
             numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / LevelOfDetailConfig.chunkSize / mapGenerator.terrainParams.UniformScaleMultiplier);
             playerFlatPosition = new Vector2(0, 0);
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
-            chunksRepository = new Dictionary<Vector2, TerrainChunk>();
+            chunksRepository = new Dictionary<Vector2, TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
             lastVisibleChunks = new List<TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
+
         }
 
         public void OnUpdate()

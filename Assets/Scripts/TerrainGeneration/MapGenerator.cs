@@ -17,14 +17,13 @@ namespace TerrainGeneration
     public class MapGenerator : MonoBehaviour
     {
         [Header("Gameplay stuff")]
-        public Transform playerObject;        
+        public Transform playerObject;
 
-        [Header("Noise settings")]
-        public NoiseParams noiseParams;
-
-        [Header("Terrain settings")]
+        [Header("Terrain generation")]
         public Material meshMaterial;
+        public NoiseParams noiseParams;
         public TerrainParams terrainParams;
+        public bool useFalloffMap;
 
         [Header("Preview settings")]
         public DisplayType displayType = DisplayType.Mesh;
@@ -34,34 +33,48 @@ namespace TerrainGeneration
         public float offsetY = 0f;
         public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
         public NormalizationType normalization;
-        public bool autoUpdatePreview = false;
+        public bool autoUpdatePreview;
 
         //Number of vertices in one dimension of map
         private const int mapChunkVerticesPerLine = LevelOfDetailConfig.chunkSize + 1;
-
-        private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
-        private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
-
-        private InfiniteTerrain infiniteTerrain;
+        private readonly InfiniteTerrain infiniteTerrain;
         private readonly System.Random prng;
+        private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue;
+        private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue;
         private readonly float[] falloffMap;
         private int seed;
 
-        public MapGenerator()
+        private struct MapThreadData<T>
+        {
+            public readonly Action<T> callback;
+            public readonly T parameter;
+
+            public MapThreadData(Action<T> callback, T parameter)
+            {
+                this.callback = callback;
+                this.parameter = parameter;
+            }
+        }
+
+        private MapGenerator()
         {
             prng = new System.Random();
+            infiniteTerrain = new InfiniteTerrain(this);
+            noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
+            meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
             falloffMap = NoiseMapGenerator.GenerateFalloffMap(mapChunkVerticesPerLine + 2);
         }
 
-        public void Start()
+        private void Start()
         {
             previewMesh.SetActive(false);
             previewTexture.SetActive(false);
-            infiniteTerrain = new InfiniteTerrain(this);
             seed = noiseParams.seed == 0 ? prng.Next() : noiseParams.seed;
+
+            infiniteTerrain.OnStart();
         }
 
-        public void Update()
+        private void Update()
         {
             while (noiseMapQueue.TryDequeue(out MapThreadData<float[]> threadData))
                 threadData.callback(threadData.parameter);
@@ -72,47 +85,18 @@ namespace TerrainGeneration
             infiniteTerrain.OnUpdate();
         }
 
-        public void GeneratePreview()
+        private void OnValidate()
         {
-            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
-
-            switch (displayType)
+            if (terrainParams != null)
             {
-                default:
-                case DisplayType.Mesh: 
-                    DisplayMeshPreview(noiseMap);
-                    break;
-                case DisplayType.NoiseMap:
-                    DisplayTexturePreview(noiseMap); 
-                    break;
-                case DisplayType.FalloffMap:
-                    DisplayTexturePreview(falloffMap); 
-                    break;
+                terrainParams.ValuesUpdated -= OnUpdatableDataUpdated;
+                terrainParams.ValuesUpdated += OnUpdatableDataUpdated;
             }
-        }
-
-        private void DisplayMeshPreview(float[] noiseMap)
-        {
-            if (terrainParams.useFalloffMap)
+            if (noiseParams != null)
             {
-                for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
-                {
-                    noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
-                }
+                noiseParams.ValuesUpdated -= OnUpdatableDataUpdated;
+                noiseParams.ValuesUpdated += OnUpdatableDataUpdated;
             }
-
-            var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)LevelOfDetail);
-            var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
-            previewMeshFilter.sharedMesh.Clear();
-            previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
-            previewMesh.transform.localScale = Vector3.one * terrainParams.UniformScaleMultiplier;
-        }
-
-        private void DisplayTexturePreview(float[] noiseMap)
-        {
-            var tex = TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLine + 2, mapChunkVerticesPerLine + 2);
-            var texRenderer = previewTexture.GetComponent<MeshRenderer>();
-            texRenderer.sharedMaterial.mainTexture = tex;
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY)
@@ -120,7 +104,7 @@ namespace TerrainGeneration
             var th = new Thread(() =>
             {
                 float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, seed);
-                if (terrainParams.useFalloffMap)
+                if (useFalloffMap)
                 {
                     for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
                     {
@@ -144,16 +128,55 @@ namespace TerrainGeneration
             th.Start();
         }
 
-        private struct MapThreadData<T>
+        private void OnUpdatableDataUpdated(object sender, EventArgs e)
         {
-            public readonly Action<T> callback;
-            public readonly T parameter;
-
-            public MapThreadData(Action<T> callback, T parameter)
+            if (!Application.isPlaying)
             {
-                this.callback = callback;
-                this.parameter = parameter;
+                GeneratePreview();
             }
+        }
+
+        public void GeneratePreview()
+        {
+            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
+
+            switch (displayType)
+            {
+                default:
+                case DisplayType.Mesh: 
+                    DisplayMeshPreview(noiseMap);
+                    break;
+                case DisplayType.NoiseMap:
+                    DisplayTexturePreview(noiseMap); 
+                    break;
+                case DisplayType.FalloffMap:
+                    DisplayTexturePreview(falloffMap); 
+                    break;
+            }
+        }
+
+        private void DisplayMeshPreview(float[] noiseMap)
+        {
+            if (useFalloffMap)
+            {
+                for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
+                {
+                    noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
+                }
+            }
+
+            var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)LevelOfDetail);
+            var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
+            previewMeshFilter.sharedMesh.Clear();
+            previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
+            previewMesh.transform.localScale = Vector3.one * terrainParams.UniformScaleMultiplier;
+        }
+
+        private void DisplayTexturePreview(float[] noiseMap)
+        {
+            var tex = TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLine + 2, mapChunkVerticesPerLine + 2);
+            var texRenderer = previewTexture.GetComponent<MeshRenderer>();
+            texRenderer.sharedMaterial.mainTexture = tex;
         }
     }
 }
