@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
   m_Name: DefaultTerrainParams
   m_EditorClassIdentifier: 
-  autoUpdate: 0
-  DepthMultiplier: 42
+  autoUpdate: 1
+  DepthMultiplier: 82
   UniformScaleMultiplier: 1
   ColorRegions:
     serializedVersion: 2
@@ -25,9 +25,9 @@ MonoBehaviour:
     key5: {r: 0.36200002, g: 0.20826969, b: 0.087242, a: 0}
     key6: {r: 1, g: 1, b: 1, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
-    ctime0: 8481
-    ctime1: 14842
-    ctime2: 19082
+    ctime0: 7517
+    ctime1: 11758
+    ctime2: 15998
     ctime3: 35081
     ctime4: 45296
     ctime5: 52235
@@ -57,8 +57,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.3214022
-      value: -0.000027457718
+      time: 0.2741152
+      value: 0.002383431
       inSlope: 0.063593596
       outSlope: 0.063593596
       tangentMode: 0

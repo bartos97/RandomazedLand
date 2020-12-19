@@ -1,5 +1,6 @@
 ﻿using TerrainGeneration.ScriptableObjects;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace TerrainGeneration.Utils
 {
@@ -15,23 +16,23 @@ namespace TerrainGeneration.Utils
         /// <summary>
         /// Generates height map based on Perlin Noise
         /// </summary>
-        /// <param name="sideLength">width and height of map</param>
+        /// <param name="pointsPerLine">number of points in width and height</param>
         /// <param name="noiseParams">parameters for noise generation</param>
         /// <param name="offsetX">perlin noise map position X</param>
         /// <param name="offsetY">perlin noise map position Y</param>
         /// <param name="seed">seed for random number generator</param>
         /// <returns>Flatten 2D array (row major order) with values in range [0, 1]</returns>
-        public static float[] GenerateFromPerlinNoise(int sideLength, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
+        public static float[] GenerateFromPerlinNoise(int pointsPerLine, NoiseParams noiseParams, float offsetX, float offsetY, int seed, NormalizationType normalizationType = NormalizationType.Global)
         {
-            float halfWidth = sideLength / 2f;
-            float halfHeight = sideLength / 2f;
-            float[] map = new float[sideLength * sideLength];
+            float halfWidth = pointsPerLine / 2f;
+            float halfHeight = pointsPerLine / 2f;
+            float[] map = new float[pointsPerLine * pointsPerLine];
             Vector2[] octavesOffsets = GenerateRandomOffsets(noiseParams.octavesAmount, offsetX, offsetY, seed);
 
             int mapIndex = 0;
-            for (int y = 0; y < sideLength; y++)
+            for (int y = 0; y < pointsPerLine; y++)
             {
-                for (int x = 0; x < sideLength; x++)
+                for (int x = 0; x < pointsPerLine; x++)
                 {
                     float amplitude = 1f;
                     float frequency = 1f;
@@ -109,32 +110,6 @@ namespace TerrainGeneration.Utils
                 array[i] = Mathf.Clamp(array[i], minValue, maxValue);
                 array[i] = Mathf.InverseLerp(minValue, maxValue, array[i]);
             }
-        }
-
-        public static float[] GenerateFalloffMap(int sideLength)
-        {
-            float[] map = new float[sideLength * sideLength];
-
-            int mapIndex = 0;
-            for (int y = 0; y < sideLength; y++)
-            {
-                for (int x = 0; x < sideLength; x++)
-                {
-                    float xValue = x / (float)sideLength * 2 - 1;
-                    float yValue = y / (float)sideLength * 2 - 1;
-                    float val = Mathf.Max(Mathf.Abs(xValue), Mathf.Abs(yValue));
-                    map[mapIndex++] = EvaluateFalloffValue(val);
-                }
-            }
-
-            return map;
-        }
-
-        private static float EvaluateFalloffValue(float value)
-        {
-            const float a = 3f;
-            const float b = 2.5f;
-            return Mathf.Pow(value, a) / (Mathf.Pow(value, a) + Mathf.Pow(b - b * value, a));
         }
     }
 }

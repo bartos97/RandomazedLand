@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97b68183a4b7bef4b89f42cb00de85d1, type: 3}
   m_Name: DefaultNoiseParams
   m_EditorClassIdentifier: 
-  autoUpdate: 0
+  autoUpdate: 1
   seed: 4
-  scale: 150
-  persistance: 0.14
-  lacunarity: 5.84
-  octavesAmount: 4
+  scale: 300
+  persistance: 0.33
+  lacunarity: 2.79
+  octavesAmount: 5

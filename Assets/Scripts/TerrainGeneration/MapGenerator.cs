@@ -36,12 +36,13 @@ namespace TerrainGeneration
         public bool autoUpdatePreview;
 
         //Number of vertices in one dimension of map
-        private const int mapChunkVerticesPerLine = LevelOfDetailConfig.chunkSize + 1;
+        private const int mapChunkVerticesPerLine = InfiniteTerrainConfig.chunkSize + 1;
+        private const int mapChunkVerticesPerLineWithBorder = mapChunkVerticesPerLine + 2;
         private readonly InfiniteTerrain infiniteTerrain;
         private readonly System.Random prng;
         private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue;
         private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue;
-        private readonly float[] falloffMap;
+        private readonly FalloffMap falloffMap;
         private int seed;
 
         private struct MapThreadData<T>
@@ -62,7 +63,7 @@ namespace TerrainGeneration
             infiniteTerrain = new InfiniteTerrain(this);
             noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
             meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
-            falloffMap = NoiseMapGenerator.GenerateFalloffMap(mapChunkVerticesPerLine + 2);
+            falloffMap = new FalloffMap(mapChunkVerticesPerLineWithBorder);
         }
 
         private void Start()
@@ -89,32 +90,77 @@ namespace TerrainGeneration
         {
             if (terrainParams != null)
             {
-                terrainParams.ValuesUpdated -= OnUpdatableDataUpdated;
-                terrainParams.ValuesUpdated += OnUpdatableDataUpdated;
+                terrainParams.ValuesUpdated -= GeneratePreview;
+                terrainParams.ValuesUpdated += GeneratePreview;
             }
             if (noiseParams != null)
             {
-                noiseParams.ValuesUpdated -= OnUpdatableDataUpdated;
-                noiseParams.ValuesUpdated += OnUpdatableDataUpdated;
+                noiseParams.ValuesUpdated -= GeneratePreview;
+                noiseParams.ValuesUpdated += GeneratePreview;
             }
         }
 
-        public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY)
+        public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY, Vector2 gridCoords)
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, seed);
+                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, noiseParams, offsetX, offsetY, seed);
+
                 if (useFalloffMap)
                 {
-                    for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
+                    int gridX = (int)gridCoords.x;
+                    int gridY = (int)gridCoords.y;
+                    bool isBorderChunk = Mathf.Abs(gridX) == InfiniteTerrainConfig.maxGridCoord || Mathf.Abs(gridY) == InfiniteTerrainConfig.maxGridCoord;
+                    //Debug.Log($"border: {isBorderChunk}; {gridX}; {gridY}");
+
+                    if (isBorderChunk)
                     {
-                        noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
+                        float[] falloff = GetFalloffMapForBorderChunk(gridX, gridY);
+                        for (int i = 0; i < (mapChunkVerticesPerLineWithBorder) * (mapChunkVerticesPerLineWithBorder); i++)
+                        {
+                            noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloff[i]);
+                        }
                     }
                 }
+
                 noiseMapQueue.Enqueue(new MapThreadData<float[]>(callback, noiseMap));
             });
 
             th.Start();
+        }
+
+        private float[] GetFalloffMapForBorderChunk(int gridX, int gridY)
+        {
+            bool isTop = gridY == InfiniteTerrainConfig.maxGridCoord;
+            bool isBottom = gridY == -InfiniteTerrainConfig.maxGridCoord;
+            bool isRight = gridX == InfiniteTerrainConfig.maxGridCoord;
+            bool isLeft = gridX == -InfiniteTerrainConfig.maxGridCoord;
+            
+            if (isTop)
+            {
+                if (isLeft)
+                    return falloffMap.TopLeftChunk;
+                if (isRight)
+                    return falloffMap.TopRightChunk;
+                return falloffMap.TopMiddleChunk;
+            }
+            else if (isBottom)
+            {
+                if (isLeft)
+                    return falloffMap.BottomLeftChunk;
+                if (isRight)
+                    return falloffMap.BottomRightChunk;
+                return falloffMap.BottomMiddleChunk;
+            }
+            else
+            {
+                if (isLeft)
+                    return falloffMap.MiddleLeftChunk;
+                if (isRight)
+                    return falloffMap.MiddleRightChunk;
+            }
+
+            throw new Exception($"You fucked up; gridX = {gridX}; gridY = {gridY}");
         }
 
         public void RequestMeshData(Action<MeshData> callback, float[] noiseMap, LevelOfDetail lod)
@@ -128,17 +174,9 @@ namespace TerrainGeneration
             th.Start();
         }
 
-        private void OnUpdatableDataUpdated(object sender, EventArgs e)
-        {
-            if (!Application.isPlaying)
-            {
-                GeneratePreview();
-            }
-        }
-
         public void GeneratePreview()
         {
-            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLine + 2, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
+            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
 
             switch (displayType)
             {
@@ -150,7 +188,7 @@ namespace TerrainGeneration
                     DisplayTexturePreview(noiseMap); 
                     break;
                 case DisplayType.FalloffMap:
-                    DisplayTexturePreview(falloffMap); 
+                    DisplayTexturePreview(falloffMap.CombinedMap); 
                     break;
             }
         }
@@ -159,9 +197,9 @@ namespace TerrainGeneration
         {
             if (useFalloffMap)
             {
-                for (int i = 0; i < (mapChunkVerticesPerLine + 2) * (mapChunkVerticesPerLine + 2); i++)
+                for (int i = 0; i < (mapChunkVerticesPerLineWithBorder) * (mapChunkVerticesPerLineWithBorder); i++)
                 {
-                    noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap[i]);
+                    noiseMap[i] = Mathf.Clamp01(noiseMap[i] - falloffMap.CombinedMap[i]);
                 }
             }
 
@@ -174,7 +212,7 @@ namespace TerrainGeneration
 
         private void DisplayTexturePreview(float[] noiseMap)
         {
-            var tex = TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLine + 2, mapChunkVerticesPerLine + 2);
+            var tex = TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLineWithBorder, mapChunkVerticesPerLineWithBorder);
             var texRenderer = previewTexture.GetComponent<MeshRenderer>();
             texRenderer.sharedMaterial.mainTexture = tex;
         }
