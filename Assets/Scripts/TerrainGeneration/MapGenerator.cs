@@ -17,12 +17,9 @@ namespace TerrainGeneration
 
     public class MapGenerator : MonoBehaviour
     {
-        [Header("Gameplay stuff")]
         public Transform playerObject;
-
-        [Header("Terrain generation")]
         public Material meshMaterial;
-        public NoiseParams noiseParams;
+        public Light sunlight;
         public TerrainParams terrainParams;
 
         [Header("Preview settings")]
@@ -37,8 +34,9 @@ namespace TerrainGeneration
         public bool autoUpdatePreview;
 
         //Number of vertices in one dimension of map
-        private const int mapChunkVerticesPerLine = InfiniteTerrainConfig.chunkSize + 1;
-        private const int mapChunkVerticesPerLineWithBorder = mapChunkVerticesPerLine + 2;
+        public const int mapChunkVerticesPerLine = InfiniteTerrainConfig.chunkSize + 1;
+        public const int mapChunkVerticesPerLineWithBorder = mapChunkVerticesPerLine + 2;
+
         private readonly InfiniteTerrain infiniteTerrain;
         private readonly System.Random prng;
         private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue;
@@ -69,9 +67,10 @@ namespace TerrainGeneration
 
         private void Start()
         {
+            InitLightingFromParams();
             previewMesh.SetActive(false);
             previewTexture.SetActive(false);
-            seed = noiseParams.seed == 0 ? prng.Next() : noiseParams.seed;
+            seed = terrainParams.noiseParams.seed == 0 ? prng.Next() : terrainParams.noiseParams.seed;
 
             infiniteTerrain.OnStart();
         }
@@ -94,10 +93,10 @@ namespace TerrainGeneration
                 terrainParams.ValuesUpdated -= GeneratePreview;
                 terrainParams.ValuesUpdated += GeneratePreview;
             }
-            if (noiseParams != null)
+            if (terrainParams != null)
             {
-                noiseParams.ValuesUpdated -= GeneratePreview;
-                noiseParams.ValuesUpdated += GeneratePreview;
+                terrainParams.ValuesUpdated -= GeneratePreview;
+                terrainParams.ValuesUpdated += GeneratePreview;
             }
         }
 
@@ -105,7 +104,7 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, noiseParams, offsetX, offsetY, seed);
+                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, terrainParams.noiseParams, offsetX, offsetY, seed);
 
                 if (terrainParams.useFalloffMap && borderType != BorderChunkType.Invalid)
                 {
@@ -135,7 +134,13 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, noiseParams, offsetX, offsetY, noiseParams.seed == 0 ? prng.Next() : noiseParams.seed, normalization);
+            InitLightingFromParams();
+            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(
+                mapChunkVerticesPerLineWithBorder, 
+                terrainParams.noiseParams, 
+                offsetX, offsetY, 
+                terrainParams.noiseParams.seed == 0 ? prng.Next() : terrainParams.noiseParams.seed,
+                normalization);
 
             switch (displayType)
             {
@@ -175,6 +180,16 @@ namespace TerrainGeneration
             var tex = TextureGenerator.GenerateFromHeightMap(noiseMap, mapChunkVerticesPerLineWithBorder, mapChunkVerticesPerLineWithBorder);
             var texRenderer = previewTexture.GetComponent<MeshRenderer>();
             texRenderer.sharedMaterial.mainTexture = tex;
+        }
+
+        private void InitLightingFromParams()
+        {
+            RenderSettings.fog = terrainParams.fogEnabled;
+            RenderSettings.fogDensity = terrainParams.fogDensity;
+            RenderSettings.fogColor = terrainParams.fogColor;
+            RenderSettings.skybox = terrainParams.skybox;
+            sunlight.color = terrainParams.sunlightColor;
+            sunlight.intensity = terrainParams.sunlightIntensity;
         }
     }
 }

@@ -100,8 +100,8 @@ namespace TerrainGeneration.Utils
                         minValue += -0.5f * amplitude;
                         amplitude *= persistance;
                     }
-                    minValue /= 1.35f;
-                    maxValue /= 1.35f;
+                    minValue /= 1.5f;
+                    maxValue /= 1.5f;
                     break;
             }
 

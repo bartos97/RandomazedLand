@@ -10,28 +10,35 @@ namespace TerrainGeneration
     {
         private readonly MapGenerator mapGenerator;
 
+        private readonly float[] flatPlane = new float[MapGenerator.mapChunkVerticesPerLineWithBorder * MapGenerator.mapChunkVerticesPerLineWithBorder];
         private Dictionary<Vector2, TerrainChunk> chunksRepository;
         private Dictionary<Vector2, BorderChunkType> borderChunksMap;
         private List<TerrainChunk> lastVisibleChunks;
 
         private int numOfVisibleChunksInDirection;
+        private float maxViewDistance;
+        private LodDistance[] distanceThresholds;
+
         private Vector2 playerFlatPosition = new Vector2(0, 0);
         private Vector2 playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
 
         public InfiniteTerrain(MapGenerator mapGenerator)
         {
-            Assert.IsTrue(LevelOfDetailConfig.maxViewDistance > InfiniteTerrainConfig.chunkSize, "Incorrect level of detail distances");
-            //Assert.IsTrue(LevelOfDetailConfig.maxViewDistance <= InfiniteTerrainConfig.worldHalfWidth, "Incorrect world size");
             this.mapGenerator = mapGenerator;
         }
 
         public void OnStart()
         {
-            numOfVisibleChunksInDirection = Mathf.RoundToInt(LevelOfDetailConfig.maxViewDistance / InfiniteTerrainConfig.chunkSize / mapGenerator.terrainParams.UniformScaleMultiplier);
+            distanceThresholds = mapGenerator.terrainParams.useFalloffMap ? LevelOfDetailConfig.distanceThresholdsFaloffMap : LevelOfDetailConfig.distanceThresholds;
+            maxViewDistance = distanceThresholds[distanceThresholds.Length - 1].viewDistance;
+            numOfVisibleChunksInDirection = Mathf.RoundToInt(maxViewDistance / InfiniteTerrainConfig.chunkSize / mapGenerator.terrainParams.UniformScaleMultiplier);
+
             playerFlatPosition = new Vector2(0, 0);
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
+
             chunksRepository = new Dictionary<Vector2, TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
             lastVisibleChunks = new List<TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
+
             InitBorderChunksMap();
         }
 
@@ -84,11 +91,6 @@ namespace TerrainGeneration
                 for (int xChunkCoordIter = -numOfVisibleChunksInDirection; xChunkCoordIter <= numOfVisibleChunksInDirection; xChunkCoordIter++)
                 {
                     var chunkCoords = new Vector2(xMiddleChunkCoord + xChunkCoordIter, yMiddleChunkCoord + yChunkCoordIter);
-                    bool isOutside = mapGenerator.terrainParams.useFalloffMap 
-                        && (Mathf.Abs(chunkCoords.x) > InfiniteTerrainConfig.maxChunkGridCoord || Mathf.Abs(chunkCoords.y) > InfiniteTerrainConfig.maxChunkGridCoord);
-
-                    if (isOutside)
-                        continue;
 
                     if (chunksRepository.ContainsKey(chunkCoords))
                     {
@@ -124,6 +126,7 @@ namespace TerrainGeneration
             private bool _isVisible;            
             private float[] noiseMap;
             private bool hasNoiseMap = false;
+            private readonly bool isOutside;
 
             public TerrainChunk(Vector2 gridCoords, InfiniteTerrain superior)
             {
@@ -142,15 +145,31 @@ namespace TerrainGeneration
                 meshObject.transform.localScale = Vector3.one * this.superior.mapGenerator.terrainParams.UniformScaleMultiplier;
                 meshObject.transform.parent = this.superior.mapGenerator.transform;
 
-                lodMeshes = new LodMesh[LevelOfDetailConfig.distanceThresholds.Length];
-                for (int i = 0; i < LevelOfDetailConfig.distanceThresholds.Length; i++)
-                {
-                    lodMeshes[i] = new LodMesh(LevelOfDetailConfig.distanceThresholds[i].lod, this.UpdateVisibility, this.superior.mapGenerator.RequestMeshData);
-                }
-                colliderLodMesh = lodMeshes[LevelOfDetailConfig.lodDistanceIndexForCollider];
+                isOutside = this.superior.mapGenerator.terrainParams.useFalloffMap
+                        && (Mathf.Abs(gridCoords.x) > InfiniteTerrainConfig.maxChunkGridCoord || Mathf.Abs(gridCoords.y) > InfiniteTerrainConfig.maxChunkGridCoord);
 
-                BorderChunkType border = this.superior.borderChunksMap.ContainsKey(gridCoords) ? this.superior.borderChunksMap[gridCoords] : BorderChunkType.Invalid;
-                this.superior.mapGenerator.RequestNoiseMap(this.OnNoiseMapReceive, positionInWorld.x, positionInWorld.z, gridCoords, border);
+                if (isOutside)
+                {
+                    lodMeshes = new LodMesh[]
+                    {
+                        new LodMesh(superior.distanceThresholds[superior.distanceThresholds.Length - 1].lod, UpdateVisibility, this.superior.mapGenerator.RequestMeshData)
+                    };
+                    colliderLodMesh = lodMeshes[0];
+                    OnNoiseMapReceive(superior.flatPlane);
+                }
+                else
+                {
+                    lodMeshes = new LodMesh[superior.distanceThresholds.Length];
+
+                    for (int i = 0; i < superior.distanceThresholds.Length; i++)
+                        lodMeshes[i] = new LodMesh(superior.distanceThresholds[i].lod, UpdateVisibility, this.superior.mapGenerator.RequestMeshData);
+
+                    colliderLodMesh = lodMeshes[LevelOfDetailConfig.lodDistanceIndexForCollider];
+
+                    BorderChunkType border = this.superior.borderChunksMap.ContainsKey(gridCoords) ? this.superior.borderChunksMap[gridCoords] : BorderChunkType.Invalid;
+                    this.superior.mapGenerator.RequestNoiseMap(OnNoiseMapReceive, positionInWorld.x, positionInWorld.z, gridCoords, border);
+                }
+
             }
 
             public bool IsVisible
@@ -168,7 +187,7 @@ namespace TerrainGeneration
             public void UpdateVisibility()
             {
                 float sqrDistanceFromPlayer = positionBounds.SqrDistance(new Vector3(superior.playerFlatPosition.x, 0f, superior.playerFlatPosition.y));
-                IsVisible = sqrDistanceFromPlayer <= LevelOfDetailConfig.maxViewDistance * LevelOfDetailConfig.maxViewDistance;
+                IsVisible = sqrDistanceFromPlayer <= superior.maxViewDistance * superior.maxViewDistance;
 
                 if (!hasNoiseMap || !IsVisible)
                     return;
@@ -200,15 +219,18 @@ namespace TerrainGeneration
 
             private int GetCurrentLodIndex(float sqrDistanceFromPlayer)
             {
-                for (int i = 0; i < LevelOfDetailConfig.distanceThresholds.Length; i++)
+                if (isOutside)
+                    return 0;
+
+                for (int i = 0; i < superior.distanceThresholds.Length; i++)
                 {
-                    float dist = LevelOfDetailConfig.distanceThresholds[i].viewDistance;
+                    float dist = superior.distanceThresholds[i].viewDistance;
                     if (sqrDistanceFromPlayer > dist * dist)
                         continue;
                     return i;
                 }
 
-                return LevelOfDetailConfig.distanceThresholds.Length - 1;
+                return superior.distanceThresholds.Length - 1;
             }
 
             private void OnNoiseMapReceive(float[] noiseMap)

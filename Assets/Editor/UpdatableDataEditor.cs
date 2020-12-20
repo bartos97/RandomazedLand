@@ -9,6 +9,7 @@ public class UpdatableDataEditor : Editor
     {
         var data = (UpdatableData)target;
         bool valueChanged = DrawDefaultInspector();
+        GUILayout.Space(15);
         bool buttonClicked = GUILayout.Button("Update");
 
         if ((data.autoUpdate && valueChanged) || buttonClicked)

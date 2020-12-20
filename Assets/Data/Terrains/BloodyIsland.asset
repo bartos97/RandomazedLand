@@ -1,0 +1,128 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
+  m_Name: BloodyIsland
+  m_EditorClassIdentifier: 
+  autoUpdate: 1
+  noiseParams:
+    seed: 0
+    scale: 300
+    persistance: 0.151
+    lacunarity: 6.72
+    octavesAmount: 3
+  useFalloffMap: 1
+  DepthMultiplier: 65
+  UniformScaleMultiplier: 1
+  ColorRegions:
+    serializedVersion: 2
+    key0: {r: 0.187488, g: 0.31536865, b: 0.496, a: 1}
+    key1: {r: 0.26929435, g: 0.447879, b: 0.703, a: 1}
+    key2: {r: 0.378, g: 0.2408723, b: 0.14442453, a: 0}
+    key3: {r: 0.3602386, g: 0.25754073, b: 0.14637478, a: 0}
+    key4: {r: 0.25638887, g: 0.355, b: 0.15777779, a: 0}
+    key5: {r: 0.24199699, g: 0.382, b: 0.101993985, a: 0}
+    key6: {r: 0.2, g: 0.09780001, b: 0.105868444, a: 0}
+    key7: {r: 0.234, g: 0.06171428, b: 0.07457143, a: 0}
+    ctime0: 3277
+    ctime1: 9445
+    ctime2: 13300
+    ctime3: 17733
+    ctime4: 30455
+    ctime5: 53777
+    ctime6: 57825
+    ctime7: 65342
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 8
+    m_NumAlphaKeys: 2
+  MeshHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: -0.0014123537
+      outSlope: -0.0014123537
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.19576219
+      value: -0.00027648546
+      inSlope: 0.02856928
+      outSlope: 0.02856928
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.16324446
+    - serializedVersion: 3
+      time: 0.31828284
+      value: 0.04433452
+      inSlope: -0.9422833
+      outSlope: -0.9422833
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.28678554
+    - serializedVersion: 3
+      time: 0.4947969
+      value: 0.2582141
+      inSlope: 3.1261263
+      outSlope: 3.1261263
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.32425788
+      outWeight: 0.227309
+    - serializedVersion: 3
+      time: 0.6580349
+      value: 0.56296444
+      inSlope: -1.5157533
+      outSlope: -1.5157533
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.03814519
+      outWeight: 0.28070647
+    - serializedVersion: 3
+      time: 0.8324773
+      value: 0.89621365
+      inSlope: -4.080146
+      outSlope: -4.080146
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.16157131
+    - serializedVersion: 3
+      time: 1.0058911
+      value: 0.720407
+      inSlope: 1.2301565
+      outSlope: 1.2301565
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.3215267
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  fogEnabled: 1
+  fogColor: {r: 0.45400003, g: 0.23416844, b: 0.20549476, a: 1}
+  fogDensity: 0.001
+  skybox: {fileID: 2100000, guid: 5d133deeaa66ed445853e946ff25e073, type: 2}
+  sunlightColor: {r: 0.65199995, g: 0.44941425, b: 0.42510396, a: 1}
+  sunlightIntensity: 2

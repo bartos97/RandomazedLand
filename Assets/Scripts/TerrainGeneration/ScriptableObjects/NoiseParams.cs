@@ -2,8 +2,8 @@
 
 namespace TerrainGeneration.ScriptableObjects
 {
-    [CreateAssetMenu(fileName = "New noise params", menuName = "Terrain generation/Noise parameters")]
-    public class NoiseParams : UpdatableData
+    [System.Serializable]
+    public class NoiseParams
     {
         public int seed;
         [Min(1f)]
