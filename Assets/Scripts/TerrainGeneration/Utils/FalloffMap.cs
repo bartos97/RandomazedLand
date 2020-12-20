@@ -8,16 +8,29 @@ using UnityEngine.Assertions;
 
 namespace TerrainGeneration.Utils
 {
+    public enum BorderChunkType
+    {
+        Invalid,
+        BottomLeft,
+        BottomMiddle,
+        BottomRight,
+        MiddleLeft,
+        MiddleRight,
+        TopLeft,
+        TopMiddle,
+        TopRight
+    }
+
     public class FalloffMap
     {
-        public float[] BottomLeftChunk { get; private set; }
-        public float[] BottomMiddleChunk {get; private set;}
-        public float[] BottomRightChunk { get; private set;}
-        public float[] MiddleLeftChunk { get; private set;}
-        public float[] MiddleRightChunk { get; private set;}
-        public float[] TopLeftChunk { get; private set;}
-        public float[] TopMiddleChunk { get; private set;}
-        public float[] TopRightChunk { get; private set;}
+        public float[] bottomLeftChunk;
+        public float[] bottomMiddleChunk;
+        public float[] bottomRightChunk;
+        public float[] middleLeftChunk;
+        public float[] middleRightChunk;
+        public float[] topLeftChunk;
+        public float[] topMiddleChunk;
+        public float[] topRightChunk;
 
         private readonly int chunkElemsCount;
         private readonly int chunkPointsPerLine;
@@ -35,24 +48,24 @@ namespace TerrainGeneration.Utils
             oneThirdOfChunk = chunkPointsPerLine / 3;
             samplerPointsPerLine = chunkPointsPerLine * 3;
 
-            BottomLeftChunk = new float[chunkElemsCount];
-            CreateChunk(0, 0, BottomLeftChunk);
-            BottomMiddleChunk = new float[chunkElemsCount];
-            CreateChunk(chunkPointsPerLine, 0, BottomMiddleChunk);
-            BottomRightChunk = new float[chunkElemsCount];
-            CreateChunk(chunkPointsPerLine * 2, 0, BottomRightChunk);
+            bottomLeftChunk = new float[chunkElemsCount];
+            CreateChunk(0, 0, bottomLeftChunk);
+            bottomMiddleChunk = new float[chunkElemsCount];
+            CreateChunk(chunkPointsPerLine, 0, bottomMiddleChunk);
+            bottomRightChunk = new float[chunkElemsCount];
+            CreateChunk(chunkPointsPerLine * 2, 0, bottomRightChunk);
 
-            MiddleLeftChunk = new float[chunkElemsCount];
-            CreateChunk(0, chunkPointsPerLine, MiddleLeftChunk);
-            MiddleRightChunk = new float[chunkElemsCount];
-            CreateChunk(chunkPointsPerLine * 2, chunkPointsPerLine, MiddleRightChunk);
+            middleLeftChunk = new float[chunkElemsCount];
+            CreateChunk(0, chunkPointsPerLine, middleLeftChunk);
+            middleRightChunk = new float[chunkElemsCount];
+            CreateChunk(chunkPointsPerLine * 2, chunkPointsPerLine, middleRightChunk);
 
-            TopLeftChunk = new float[chunkElemsCount];
-            CreateChunk(0, chunkPointsPerLine * 2, TopLeftChunk);
-            TopMiddleChunk = new float[chunkElemsCount];
-            CreateChunk(chunkPointsPerLine, chunkPointsPerLine * 2, TopMiddleChunk);
-            TopRightChunk = new float[chunkElemsCount];
-            CreateChunk(chunkPointsPerLine * 2, chunkPointsPerLine * 2, TopRightChunk);
+            topLeftChunk = new float[chunkElemsCount];
+            CreateChunk(0, chunkPointsPerLine * 2, topLeftChunk);
+            topMiddleChunk = new float[chunkElemsCount];
+            CreateChunk(chunkPointsPerLine, chunkPointsPerLine * 2, topMiddleChunk);
+            topRightChunk = new float[chunkElemsCount];
+            CreateChunk(chunkPointsPerLine * 2, chunkPointsPerLine * 2, topRightChunk);
         }
 
         public float[] CombinedMap
@@ -63,21 +76,48 @@ namespace TerrainGeneration.Utils
                 {
                     combinedMap = new float[chunkElemsCount];
 
-                    FromChunkToCombined(0, 0, BottomLeftChunk);
-                    FromChunkToCombined(oneThirdOfChunk, 0, BottomMiddleChunk);
-                    FromChunkToCombined(oneThirdOfChunk * 2, 0, BottomRightChunk);
+                    FromChunkToCombined(0, 0, bottomLeftChunk);
+                    FromChunkToCombined(oneThirdOfChunk, 0, bottomMiddleChunk);
+                    FromChunkToCombined(oneThirdOfChunk * 2, 0, bottomRightChunk);
 
-                    FromChunkToCombined(0, oneThirdOfChunk, MiddleLeftChunk);
-                    FromChunkToCombined(oneThirdOfChunk * 2, oneThirdOfChunk, MiddleRightChunk);
+                    FromChunkToCombined(0, oneThirdOfChunk, middleLeftChunk);
+                    FromChunkToCombined(oneThirdOfChunk * 2, oneThirdOfChunk, middleRightChunk);
 
-                    FromChunkToCombined(0, oneThirdOfChunk * 2, TopLeftChunk);
-                    FromChunkToCombined(oneThirdOfChunk, oneThirdOfChunk * 2, TopMiddleChunk);
-                    FromChunkToCombined(oneThirdOfChunk * 2, oneThirdOfChunk * 2, TopRightChunk);
+                    FromChunkToCombined(0, oneThirdOfChunk * 2, topLeftChunk);
+                    FromChunkToCombined(oneThirdOfChunk, oneThirdOfChunk * 2, topMiddleChunk);
+                    FromChunkToCombined(oneThirdOfChunk * 2, oneThirdOfChunk * 2, topRightChunk);
 
                     isGenerated = true;
                 }
 
                 return combinedMap;
+            }
+        }
+
+        public float[] GetChunk(BorderChunkType type)
+        {
+            switch (type)
+            {
+                case BorderChunkType.BottomLeft:
+                    return bottomLeftChunk;
+                case BorderChunkType.BottomMiddle:
+                    return bottomMiddleChunk;
+                case BorderChunkType.BottomRight:
+                    return bottomRightChunk;
+                case BorderChunkType.MiddleLeft:
+                    return middleLeftChunk;
+                case BorderChunkType.MiddleRight:
+                    return middleRightChunk;
+                case BorderChunkType.TopLeft:
+                    return topLeftChunk;
+                case BorderChunkType.TopMiddle:
+                    return topMiddleChunk;
+                case BorderChunkType.TopRight:
+                    return topRightChunk;
+
+                case BorderChunkType.Invalid:
+                default:
+                    throw new ArgumentException("Invalid border chunk type");
             }
         }
 
@@ -110,10 +150,6 @@ namespace TerrainGeneration.Utils
 
         private float SampleValue(int x, int y)
         {
-            //var pos = new Vector2(x - (float)samplerPointsPerLine / 2, y - (float)samplerPointsPerLine / 2);
-            //var bounds = new Bounds(Vector3.zero, new Vector3(chunkPointsPerLine / 2, chunkPointsPerLine / 2, chunkPointsPerLine / 2));
-            //return Mathf.InverseLerp(0f, chunkPointsPerLine * 1.5f * chunkPointsPerLine * 1.5f, bounds.SqrDistance(pos));
-
             float xValue = x / (float)samplerPointsPerLine * 2 - 1;
             float yValue = y / (float)samplerPointsPerLine * 2 - 1;
             float val = Mathf.Max(Mathf.Abs(xValue), Mathf.Abs(yValue));
@@ -122,7 +158,7 @@ namespace TerrainGeneration.Utils
 
         private float EvaluateValue(float x)
         {
-            return x >= 0.5f ? 4 * (x - 0.5f) * (x - 0.5f) : 0f;
+            return x >= 0.5f ? 4*x*x - 4*x + 1 : 0f;
             //const float a = 3.0f;
             //const float b = 6.0f;
             //return Mathf.Pow(x, a) / (Mathf.Pow(x, a) + Mathf.Pow(b - b * x, a));

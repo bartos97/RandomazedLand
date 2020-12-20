@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefaultTerrainParams
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  DepthMultiplier: 82
+  DepthMultiplier: 59
   UniformScaleMultiplier: 1
   ColorRegions:
     serializedVersion: 2
@@ -25,10 +25,10 @@ MonoBehaviour:
     key5: {r: 0.36200002, g: 0.20826969, b: 0.087242, a: 0}
     key6: {r: 1, g: 1, b: 1, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
-    ctime0: 7517
-    ctime1: 11758
-    ctime2: 15998
-    ctime3: 35081
+    ctime0: 16769
+    ctime1: 27949
+    ctime2: 33346
+    ctime3: 38550
     ctime4: 45296
     ctime5: 52235
     ctime6: 57440
@@ -57,14 +57,14 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 0.2741152
-      value: 0.002383431
-      inSlope: 0.063593596
-      outSlope: 0.063593596
+      time: 0.5245666
+      value: -0.000007339986
+      inSlope: 0.016885357
+      outSlope: 0.016885357
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
-      outWeight: 0.12228828
+      outWeight: 0.14237121
     - serializedVersion: 3
       time: 1
       value: 1
@@ -77,3 +77,4 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  useFalloffMap: 0

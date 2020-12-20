@@ -11,6 +11,7 @@ namespace TerrainGeneration.ScriptableObjects
         public float UniformScaleMultiplier;
         public Gradient ColorRegions;
         public AnimationCurve MeshHeightCurve;
+        public bool useFalloffMap;
     }
 
 }

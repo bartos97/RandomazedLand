@@ -3,8 +3,8 @@
     public static class InfiniteTerrainConfig
     {
         public const int chunkSize = 240;
-        public const int maxGridCoord = 4;
-        public const int worldHalfWidth = chunkSize * maxGridCoord;
+        public const int maxChunkGridCoord = 4;
+        public const int worldHalfWidth = chunkSize * maxChunkGridCoord;
     }
 
     public static class LevelOfDetailConfig

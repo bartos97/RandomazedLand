@@ -11,6 +11,7 @@ namespace TerrainGeneration
         private readonly MapGenerator mapGenerator;
 
         private Dictionary<Vector2, TerrainChunk> chunksRepository;
+        private Dictionary<Vector2, BorderChunkType> borderChunksMap;
         private List<TerrainChunk> lastVisibleChunks;
 
         private int numOfVisibleChunksInDirection;
@@ -31,7 +32,7 @@ namespace TerrainGeneration
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
             chunksRepository = new Dictionary<Vector2, TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
             lastVisibleChunks = new List<TerrainChunk>((numOfVisibleChunksInDirection * 2 + 1) * (numOfVisibleChunksInDirection * 2 + 1));
-
+            InitBorderChunksMap();
         }
 
         public void OnUpdate()
@@ -47,6 +48,31 @@ namespace TerrainGeneration
             }
         }
 
+        private void InitBorderChunksMap()
+        {
+            float max = (float)InfiniteTerrainConfig.maxChunkGridCoord;
+
+            borderChunksMap = new Dictionary<Vector2, BorderChunkType>(InfiniteTerrainConfig.maxChunkGridCoord * 6 + 2)
+            {
+                { new Vector2(-max, -max), BorderChunkType.BottomLeft },
+                { new Vector2( max, -max), BorderChunkType.BottomRight },
+                { new Vector2(-max,  max), BorderChunkType.TopLeft },
+                { new Vector2( max,  max), BorderChunkType.TopRight },
+            };
+
+            for (int x = -InfiniteTerrainConfig.maxChunkGridCoord + 1; x < InfiniteTerrainConfig.maxChunkGridCoord; x++)
+            {
+                borderChunksMap.Add(new Vector2(x, max), BorderChunkType.TopMiddle);
+                borderChunksMap.Add(new Vector2(x, -max), BorderChunkType.BottomMiddle);
+            }
+
+            for (int y = -InfiniteTerrainConfig.maxChunkGridCoord + 1; y < InfiniteTerrainConfig.maxChunkGridCoord; y++)
+            {
+                borderChunksMap.Add(new Vector2(-max, y), BorderChunkType.MiddleLeft);
+                borderChunksMap.Add(new Vector2(max, y), BorderChunkType.MiddleRight);
+            }
+        }
+
         private void UpdateVisibleChunks()
         {
             ClearLastChunks();
@@ -58,7 +84,8 @@ namespace TerrainGeneration
                 for (int xChunkCoordIter = -numOfVisibleChunksInDirection; xChunkCoordIter <= numOfVisibleChunksInDirection; xChunkCoordIter++)
                 {
                     var chunkCoords = new Vector2(xMiddleChunkCoord + xChunkCoordIter, yMiddleChunkCoord + yChunkCoordIter);
-                    bool isOutside = mapGenerator.useFalloffMap && (Mathf.Abs(chunkCoords.x) > InfiniteTerrainConfig.maxGridCoord || Mathf.Abs(chunkCoords.y) > InfiniteTerrainConfig.maxGridCoord);
+                    bool isOutside = mapGenerator.terrainParams.useFalloffMap 
+                        && (Mathf.Abs(chunkCoords.x) > InfiniteTerrainConfig.maxChunkGridCoord || Mathf.Abs(chunkCoords.y) > InfiniteTerrainConfig.maxChunkGridCoord);
 
                     if (isOutside)
                         continue;
@@ -122,7 +149,8 @@ namespace TerrainGeneration
                 }
                 colliderLodMesh = lodMeshes[LevelOfDetailConfig.lodDistanceIndexForCollider];
 
-                this.superior.mapGenerator.RequestNoiseMap(this.OnNoiseMapReceive, positionInWorld.x, positionInWorld.z, gridCoords);
+                BorderChunkType border = this.superior.borderChunksMap.ContainsKey(gridCoords) ? this.superior.borderChunksMap[gridCoords] : BorderChunkType.Invalid;
+                this.superior.mapGenerator.RequestNoiseMap(this.OnNoiseMapReceive, positionInWorld.x, positionInWorld.z, gridCoords, border);
             }
 
             public bool IsVisible

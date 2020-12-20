@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoUpdate: 1
   seed: 4
-  scale: 300
-  persistance: 0.33
-  lacunarity: 2.79
-  octavesAmount: 5
+  scale: 80
+  persistance: 0.144
+  lacunarity: 4.73
+  octavesAmount: 3
