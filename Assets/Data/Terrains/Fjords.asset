@@ -16,29 +16,29 @@ MonoBehaviour:
   noiseParams:
     seed: 1
     scale: 150
-    persistance: 0.114
-    lacunarity: 4.61
-    octavesAmount: 3
-  useFalloffMap: 1
-  DepthMultiplier: 65
+    persistance: 0.227
+    lacunarity: 3.51
+    octavesAmount: 4
+  useFalloffMap: 0
+  DepthMultiplier: 80
   UniformScaleMultiplier: 1
   ColorRegions:
     serializedVersion: 2
     key0: {r: 0.13542001, g: 0.47285014, b: 0.915, a: 1}
     key1: {r: 0.35076728, g: 0.5421332, b: 0.7169479, a: 1}
     key2: {r: 0.84400004, g: 0.7008195, b: 0.263328, a: 0}
-    key3: {r: 0.19256471, g: 0.3882353, b: 0.21457765, a: 0}
-    key4: {r: 0.07448999, g: 0.39, b: 0.1111117, a: 0}
+    key3: {r: 0.07448999, g: 0.39, b: 0.1111117, a: 0}
+    key4: {r: 0.36200002, g: 0.20826969, b: 0.087242, a: 0}
     key5: {r: 0.36200002, g: 0.20826969, b: 0.087242, a: 0}
     key6: {r: 1, g: 1, b: 1, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
     ctime0: 16769
     ctime1: 27949
     ctime2: 33346
-    ctime3: 38550
-    ctime4: 45296
-    ctime5: 52235
-    ctime6: 57440
+    ctime3: 46067
+    ctime4: 54934
+    ctime5: 61487
+    ctime6: 65535
     ctime7: 65535
     atime0: 0
     atime1: 65535
@@ -49,7 +49,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 8
+    m_NumColorKeys: 7
     m_NumAlphaKeys: 2
   MeshHeightCurve:
     serializedVersion: 2
@@ -73,8 +73,17 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.14237121
     - serializedVersion: 3
-      time: 1
-      value: 1
+      time: 0.8249217
+      value: 0.17402706
+      inSlope: 1.3070933
+      outSlope: 1.3070933
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.70481205
+    - serializedVersion: 3
+      time: 1.0021362
+      value: 0.99622726
       inSlope: 2
       outSlope: 2
       tangentMode: 0
