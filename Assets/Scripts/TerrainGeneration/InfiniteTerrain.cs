@@ -29,9 +29,9 @@ namespace TerrainGeneration
 
         public void OnStart()
         {
-            distanceThresholds = mapGenerator.terrainParams.useFalloffMap ? LevelOfDetailConfig.distanceThresholdsFaloffMap : LevelOfDetailConfig.distanceThresholds;
+            distanceThresholds = mapGenerator.ActiveTerrainParams.useFalloffMap ? LevelOfDetailConfig.distanceThresholdsFaloffMap : LevelOfDetailConfig.distanceThresholds;
             maxViewDistance = distanceThresholds[distanceThresholds.Length - 1].viewDistance;
-            numOfVisibleChunksInDirection = Mathf.RoundToInt(maxViewDistance / InfiniteTerrainConfig.chunkSize / mapGenerator.terrainParams.UniformScaleMultiplier);
+            numOfVisibleChunksInDirection = Mathf.RoundToInt(maxViewDistance / InfiniteTerrainConfig.chunkSize / mapGenerator.ActiveTerrainParams.UniformScaleMultiplier);
 
             playerFlatPosition = new Vector2(0, 0);
             playerPreviousFlatPosition = new Vector2(float.MaxValue, float.MaxValue);
@@ -44,8 +44,8 @@ namespace TerrainGeneration
 
         public void OnUpdate()
         {
-            playerFlatPosition.x = mapGenerator.playerObject.position.x / mapGenerator.terrainParams.UniformScaleMultiplier;
-            playerFlatPosition.y = mapGenerator.playerObject.position.z / mapGenerator.terrainParams.UniformScaleMultiplier;
+            playerFlatPosition.x = mapGenerator.playerObject.position.x / mapGenerator.ActiveTerrainParams.UniformScaleMultiplier;
+            playerFlatPosition.y = mapGenerator.playerObject.position.z / mapGenerator.ActiveTerrainParams.UniformScaleMultiplier;
             float playerDeltaPosition = Vector2.Distance(playerPreviousFlatPosition, playerFlatPosition);
 
             if (playerDeltaPosition > LevelOfDetailConfig.playerPositionThresholdForChunksUpdate)
@@ -141,11 +141,11 @@ namespace TerrainGeneration
                 meshCollider = meshObject.AddComponent<MeshCollider>();
 
                 meshRenderer.material = this.superior.mapGenerator.meshMaterial;
-                meshObject.transform.position = positionInWorld * this.superior.mapGenerator.terrainParams.UniformScaleMultiplier;
-                meshObject.transform.localScale = Vector3.one * this.superior.mapGenerator.terrainParams.UniformScaleMultiplier;
+                meshObject.transform.position = positionInWorld * this.superior.mapGenerator.ActiveTerrainParams.UniformScaleMultiplier;
+                meshObject.transform.localScale = Vector3.one * this.superior.mapGenerator.ActiveTerrainParams.UniformScaleMultiplier;
                 meshObject.transform.parent = this.superior.mapGenerator.transform;
 
-                isOutside = this.superior.mapGenerator.terrainParams.useFalloffMap
+                isOutside = this.superior.mapGenerator.ActiveTerrainParams.useFalloffMap
                         && (Mathf.Abs(gridCoords.x) > InfiniteTerrainConfig.maxChunkGridCoord || Mathf.Abs(gridCoords.y) > InfiniteTerrainConfig.maxChunkGridCoord);
 
                 if (isOutside)

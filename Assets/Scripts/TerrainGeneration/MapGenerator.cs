@@ -1,10 +1,11 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Linq;
 using TerrainGeneration.ScriptableObjects;
 using TerrainGeneration.Utils;
-using System.Collections.Generic;
 
 namespace TerrainGeneration
 {   
@@ -20,10 +21,12 @@ namespace TerrainGeneration
         public Transform playerObject;
         public Material meshMaterial;
         public Light sunlight;
-        public TerrainParams terrainParams;
+        public TerrainParams[] terrains;
+        public TerrainParams ActiveTerrainParams { get; private set; }
 
         [Header("Preview settings")]
         public GameObject previewMesh;
+        public MeshFilter previewMeshFilter;
         public GameObject previewTexture;
         public DisplayType displayType = DisplayType.Mesh;
         public LevelOfDetail LevelOfDetail = LevelOfDetail._1;
@@ -67,10 +70,11 @@ namespace TerrainGeneration
 
         private void Start()
         {
+            ActiveTerrainParams = terrains.First(x => x.isActive);
             InitLightingFromParams();
             previewMesh.SetActive(false);
             previewTexture.SetActive(false);
-            seed = terrainParams.noiseParams.seed == 0 ? prng.Next() : terrainParams.noiseParams.seed;
+            seed = ActiveTerrainParams.noiseParams.seed == 0 ? prng.Next() : ActiveTerrainParams.noiseParams.seed;
 
             infiniteTerrain.OnStart();
         }
@@ -88,25 +92,32 @@ namespace TerrainGeneration
 
         private void OnValidate()
         {
-            if (terrainParams != null)
+            if (ActiveTerrainParams == null)
             {
-                terrainParams.ValuesUpdated -= GeneratePreview;
-                terrainParams.ValuesUpdated += GeneratePreview;
+                ActiveTerrainParams = terrains.First(x => x.isActive);
             }
-            if (terrainParams != null)
+            else
             {
-                terrainParams.ValuesUpdated -= GeneratePreview;
-                terrainParams.ValuesUpdated += GeneratePreview;
+                ActiveTerrainParams.ValuesUpdated -= GeneratePreview;
+                ActiveTerrainParams.ValuesUpdated += GeneratePreview;
             }
+        }
+        public void GoToMenu()
+        {
+            foreach (var param in terrains)
+            {
+                param.isActive = false;
+            }
+            SceneManager.LoadScene("StartMenu");
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY, Vector2 gridCoords, BorderChunkType borderType = BorderChunkType.Invalid)
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, terrainParams.noiseParams, offsetX, offsetY, seed);
+                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, ActiveTerrainParams.noiseParams, offsetX, offsetY, seed);
 
-                if (terrainParams.useFalloffMap && borderType != BorderChunkType.Invalid)
+                if (ActiveTerrainParams.useFalloffMap && borderType != BorderChunkType.Invalid)
                 {
                     float[] falloff = falloffMap.GetChunk(borderType);
                     for (int i = 0; i < (mapChunkVerticesPerLineWithBorder) * (mapChunkVerticesPerLineWithBorder); i++)
@@ -125,7 +136,7 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)lod);
+                var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, ActiveTerrainParams, (int)lod);
                 meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
             });
 
@@ -134,12 +145,14 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
+            ActiveTerrainParams = terrains.First(x => x.isActive);
+            OnValidate();
             InitLightingFromParams();
             var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(
                 mapChunkVerticesPerLineWithBorder, 
-                terrainParams.noiseParams, 
+                ActiveTerrainParams.noiseParams, 
                 offsetX, offsetY, 
-                terrainParams.noiseParams.seed == 0 ? prng.Next() : terrainParams.noiseParams.seed,
+                ActiveTerrainParams.noiseParams.seed == 0 ? prng.Next() : ActiveTerrainParams.noiseParams.seed,
                 normalization);
 
             switch (displayType)
@@ -159,7 +172,7 @@ namespace TerrainGeneration
 
         private void DisplayMeshPreview(float[] noiseMap)
         {
-            if (terrainParams.useFalloffMap)
+            if (ActiveTerrainParams.useFalloffMap)
             {
                 float[] falloff = borderFalloffType == BorderChunkType.Invalid ? falloffMap.CombinedMap : falloffMap.GetChunk(borderFalloffType);
                 for (int i = 0; i < (mapChunkVerticesPerLineWithBorder) * (mapChunkVerticesPerLineWithBorder); i++)
@@ -168,11 +181,10 @@ namespace TerrainGeneration
                 }
             }
 
-            var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, terrainParams, (int)LevelOfDetail);
-            var previewMeshFilter = previewMesh.GetComponent<MeshFilter>();
+            var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, ActiveTerrainParams, (int)LevelOfDetail);
             previewMeshFilter.sharedMesh.Clear();
             previewMeshFilter.sharedMesh = meshData.GetUnityMesh();
-            previewMesh.transform.localScale = Vector3.one * terrainParams.UniformScaleMultiplier;
+            previewMesh.transform.localScale = Vector3.one * ActiveTerrainParams.UniformScaleMultiplier;
         }
 
         private void DisplayTexturePreview(float[] noiseMap)
@@ -184,12 +196,12 @@ namespace TerrainGeneration
 
         private void InitLightingFromParams()
         {
-            RenderSettings.fog = terrainParams.fogEnabled;
-            RenderSettings.fogDensity = terrainParams.fogDensity;
-            RenderSettings.fogColor = terrainParams.fogColor;
-            RenderSettings.skybox = terrainParams.skybox;
-            sunlight.color = terrainParams.sunlightColor;
-            sunlight.intensity = terrainParams.sunlightIntensity;
+            RenderSettings.fog = ActiveTerrainParams.fogEnabled;
+            RenderSettings.fogDensity = ActiveTerrainParams.fogDensity;
+            RenderSettings.fogColor = ActiveTerrainParams.fogColor;
+            RenderSettings.skybox = ActiveTerrainParams.skybox;
+            sunlight.color = ActiveTerrainParams.sunlightColor;
+            sunlight.intensity = ActiveTerrainParams.sunlightIntensity;
         }
     }
 }

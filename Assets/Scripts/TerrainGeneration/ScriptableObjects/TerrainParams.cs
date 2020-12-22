@@ -6,6 +6,7 @@ namespace TerrainGeneration.ScriptableObjects
     public class TerrainParams : UpdatableData
     {
         [Space]
+        public bool isActive = false;
         public NoiseParams noiseParams;
 
         [Header("Terrain")]

@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
+  m_Name: CosmicTripIsland
+  m_EditorClassIdentifier: 
+  autoUpdate: 1
+  isActive: 1
+  noiseParams:
+    seed: 186207492
+    scale: 200
+    persistance: 0.338
+    lacunarity: 4.73
+    octavesAmount: 5
+  useFalloffMap: 1
+  DepthMultiplier: 55
+  UniformScaleMultiplier: 1
+  ColorRegions:
+    serializedVersion: 2
+    key0: {r: 0.21176471, g: 1, b: 1, a: 1}
+    key1: {r: 0, g: 0.38431373, b: 0.8207547, a: 1}
+    key2: {r: 0.6431373, g: 0, b: 1, a: 0}
+    key3: {r: 0, g: 0.9811321, b: 0.1408646, a: 0}
+    key4: {r: 0, g: 0.9811321, b: 0.1408646, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 5975
+    ctime1: 15420
+    ctime2: 32189
+    ctime3: 43562
+    ctime4: 65535
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 5
+    m_NumAlphaKeys: 2
+  MeshHeightCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.2242627
+      value: 0.0018215198
+      inSlope: 0.0071069067
+      outSlope: 0.0071069067
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.18204407
+    - serializedVersion: 3
+      time: 0.5271026
+      value: 0.19325642
+      inSlope: -5.510801
+      outSlope: -5.510801
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.053669505
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  fogEnabled: 1
+  fogColor: {r: 0.002669984, g: 0.2, b: 0.48235294, a: 1}
+  fogDensity: 0.0012
+  skybox: {fileID: 2100000, guid: f531e09e2ad2fb440b4eed7605863143, type: 2}
+  sunlightColor: {r: 1, g: 1, b: 1, a: 1}
+  sunlightIntensity: 0.7

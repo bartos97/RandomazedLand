@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Fjords
   m_EditorClassIdentifier: 
   autoUpdate: 1
+  isActive: 0
   noiseParams:
-    seed: 1
+    seed: 573650683
     scale: 150
     persistance: 0.227
     lacunarity: 3.51
@@ -94,8 +95,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   fogEnabled: 1
-  fogColor: {r: 0.73800004, g: 0.88293624, b: 1, a: 1}
+  fogColor: {r: 0.936, g: 0.9713433, b: 1, a: 1}
   fogDensity: 0.002
   skybox: {fileID: 2100000, guid: 20d4f77b9022eab48b4d94599ed4bf82, type: 2}
   sunlightColor: {r: 1, g: 1, b: 1, a: 1}
-  sunlightIntensity: 1.7
+  sunlightIntensity: 1.88

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: BloodyIsland
   m_EditorClassIdentifier: 
   autoUpdate: 1
+  isActive: 0
   noiseParams:
     seed: 0
     scale: 300
@@ -121,8 +122,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   fogEnabled: 1
-  fogColor: {r: 0.45400003, g: 0.23416844, b: 0.20549476, a: 1}
-  fogDensity: 0.001
+  fogColor: {r: 0.45400003, g: 0.27058825, b: 0.20549476, a: 1}
+  fogDensity: 0.0013
   skybox: {fileID: 2100000, guid: 5d133deeaa66ed445853e946ff25e073, type: 2}
-  sunlightColor: {r: 0.65199995, g: 0.44941425, b: 0.42510396, a: 1}
-  sunlightIntensity: 2
+  sunlightColor: {r: 1, g: 0.6627451, b: 0.34117648, a: 1}
+  sunlightIntensity: 2.23
