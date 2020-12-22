@@ -9,7 +9,7 @@ namespace TerrainGeneration.Utils
         Local, Global
     }
 
-    public static class NoiseMapGenerator
+    public static class NoiseGenerator
     {
         private const int MaxRandomOffset = 10000;
 

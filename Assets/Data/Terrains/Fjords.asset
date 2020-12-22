@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Fjords
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  isActive: 0
+  isActive: 1
   noiseParams:
-    seed: 573650683
+    seed: 0
     scale: 150
     persistance: 0.227
     lacunarity: 3.51

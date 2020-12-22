@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: CosmicTripIsland
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  isActive: 1
+  isActive: 0
   noiseParams:
-    seed: 186207492
+    seed: 0
     scale: 200
     persistance: 0.338
     lacunarity: 4.73

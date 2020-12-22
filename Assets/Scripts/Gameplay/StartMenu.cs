@@ -44,11 +44,10 @@ public class StartMenu : MonoBehaviour
         if (activeTerrainParams != null)
         {
             activeTerrainParams.isActive = false;
-            activeTerrainParams.noiseParams.seed = 0;
         }
 
         activeTerrainParams = param;
-        activeTerrainParams.noiseParams.seed = prng.Next();
+        activeTerrainParams.noiseParams.seed = 0;
         activeTerrainParams.isActive = true;
         GeneratePreview();
     }
@@ -56,11 +55,11 @@ public class StartMenu : MonoBehaviour
     private void GeneratePreview()
     {
         InitLightingFromParams();
-        var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(
+        var noiseMap = NoiseGenerator.GenerateFromPerlinNoise(
             MapGenerator.mapChunkVerticesPerLineWithBorder,
             activeTerrainParams.noiseParams,
             0, 0,
-            activeTerrainParams.noiseParams.seed,
+            prng.Next(),
             NormalizationType.Local);
 
         var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, MapGenerator.mapChunkVerticesPerLine, activeTerrainParams, (int)LevelOfDetail._1);

@@ -92,14 +92,19 @@ namespace TerrainGeneration
 
         private void OnValidate()
         {
-            if (ActiveTerrainParams == null)
+            try
             {
                 ActiveTerrainParams = terrains.First(x => x.isActive);
             }
-            else
+            catch (Exception)
             {
-                ActiveTerrainParams.ValuesUpdated -= GeneratePreview;
-                ActiveTerrainParams.ValuesUpdated += GeneratePreview;
+                ActiveTerrainParams = terrains.First();
+            }
+
+            foreach (var param in terrains)
+            {
+                param.ValuesUpdated -= GeneratePreview;
+                param.ValuesUpdated += GeneratePreview;
             }
         }
         public void GoToMenu()
@@ -115,7 +120,7 @@ namespace TerrainGeneration
         {
             var th = new Thread(() =>
             {
-                float[] noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, ActiveTerrainParams.noiseParams, offsetX, offsetY, seed);
+                float[] noiseMap = NoiseGenerator.GenerateFromPerlinNoise(mapChunkVerticesPerLineWithBorder, ActiveTerrainParams.noiseParams, offsetX, offsetY, seed);
 
                 if (ActiveTerrainParams.useFalloffMap && borderType != BorderChunkType.Invalid)
                 {
@@ -145,10 +150,8 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
-            ActiveTerrainParams = terrains.First(x => x.isActive);
-            OnValidate();
             InitLightingFromParams();
-            var noiseMap = NoiseMapGenerator.GenerateFromPerlinNoise(
+            var noiseMap = NoiseGenerator.GenerateFromPerlinNoise(
                 mapChunkVerticesPerLineWithBorder, 
                 ActiveTerrainParams.noiseParams, 
                 offsetX, offsetY, 
