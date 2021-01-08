@@ -96,8 +96,9 @@ namespace TerrainGeneration
             {
                 ActiveTerrainParams = terrains.First(x => x.isActive);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Debug.Log(e.ToString());
                 ActiveTerrainParams = terrains.First();
             }
 
@@ -106,14 +107,6 @@ namespace TerrainGeneration
                 param.ValuesUpdated -= GeneratePreview;
                 param.ValuesUpdated += GeneratePreview;
             }
-        }
-        public void GoToMenu()
-        {
-            foreach (var param in terrains)
-            {
-                param.isActive = false;
-            }
-            SceneManager.LoadScene("StartMenu");
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY, Vector2 gridCoords, BorderChunkType borderType = BorderChunkType.Invalid)
