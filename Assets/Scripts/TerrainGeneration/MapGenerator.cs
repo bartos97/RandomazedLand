@@ -69,14 +69,42 @@ namespace TerrainGeneration
             falloffMap = new FalloffMap(mapChunkVerticesPerLineWithBorder);
         }
 
+    #region UnityMethods
         private void Start()
         {
-            ActiveTerrainParams = terrains.First(x => x.isActive);
-            InitLightingFromParams();
+            bool newGame = true;
+
+            if (PlayerPrefs.HasKey(Config.PrefKeyContiuneGameFlag) && PlayerPrefs.HasKey(Config.PrefKeyGameSave))
+            {
+                if (PlayerPrefs.GetInt(Config.PrefKeyContiuneGameFlag) == 1)
+                {
+                    newGame = false;
+                    string json = PlayerPrefs.GetString(Config.PrefKeyGameSave);
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        var saveData = JsonUtility.FromJson<GameSaveData>(json);
+                        seed = saveData.seed;
+                        playerObject.position = new Vector3(saveData.playerPos[0], saveData.playerPos[1], saveData.playerPos[2]);
+
+                        foreach (var terrain in terrains)
+                        {
+                            terrain.isActive = false;
+                        }
+                        ActiveTerrainParams = terrains.First(x => x.terrainName == saveData.terrainName);
+                        ActiveTerrainParams.isActive = true;
+                    }
+                }
+            }
+
+            if (newGame)
+            {
+                ActiveTerrainParams = terrains.First(x => x.isActive);
+                seed = ActiveTerrainParams.noiseParams.seed == 0 ? prng.Next() : ActiveTerrainParams.noiseParams.seed;
+            }
+
             previewMesh.SetActive(false);
             previewTexture.SetActive(false);
-            seed = ActiveTerrainParams.noiseParams.seed == 0 ? prng.Next() : ActiveTerrainParams.noiseParams.seed;
-
+            InitLightingFromParams();
             infiniteTerrain.OnStart();
         }
 
@@ -93,21 +121,41 @@ namespace TerrainGeneration
 
         private void OnValidate()
         {
-            try
+            if (Application.isEditor)
             {
-                ActiveTerrainParams = terrains.First(x => x.isActive);
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e.ToString());
-                ActiveTerrainParams = terrains.First();
+                try
+                {
+                    ActiveTerrainParams = terrains.First(x => x.isActive);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e.ToString());
+                    ActiveTerrainParams = terrains.First();
+                }
+
+                foreach (var param in terrains)
+                {
+                    param.ValuesUpdated -= GeneratePreview;
+                    param.ValuesUpdated += GeneratePreview;
+                }
             }
 
-            foreach (var param in terrains)
+        }
+    #endregion
+
+        public GameSaveData GetSaveData()
+        {
+            return new GameSaveData
             {
-                param.ValuesUpdated -= GeneratePreview;
-                param.ValuesUpdated += GeneratePreview;
-            }
+                seed = seed,
+                terrainName = ActiveTerrainParams.terrainName,
+                playerPos = new float[]
+                {
+                    playerObject.position.x,
+                    playerObject.position.y + 5f,
+                    playerObject.position.z
+                }
+            };
         }
 
         public void RequestNoiseMap(Action<float[]> callback, float offsetX, float offsetY, Vector2 gridCoords, BorderChunkType borderType = BorderChunkType.Invalid)

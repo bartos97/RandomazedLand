@@ -6,6 +6,9 @@ namespace Data.ScriptableObjects
     public class TerrainParams : UpdatableData
     {
         [Space]
+        public string terrainName;
+
+        [Space]
         public bool isActive = false;
         public NoiseParams noiseParams;
 

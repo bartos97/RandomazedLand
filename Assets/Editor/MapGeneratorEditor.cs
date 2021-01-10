@@ -15,5 +15,10 @@ public class MapGeneratorEditor : Editor
         {
             mapGenerator.GeneratePreview();
         }
+
+        if (GUILayout.Button("Clear PlayerPrefs"))
+        {
+            PlayerPrefs.DeleteAll();
+        }
     }
 }

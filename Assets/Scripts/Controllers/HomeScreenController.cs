@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Data;
 using Data.ScriptableObjects;
@@ -11,6 +12,8 @@ namespace Controllers
     {
         public Material meshMaterial;
         public Light sunlight;
+        public Button continueButton;
+        public TerrainParams[] terrains;
 
         private GameObject meshObject;
         private MeshRenderer meshRenderer;
@@ -20,8 +23,15 @@ namespace Controllers
 
         private void Start()
         {
+            SetContinueButtonActiveState();
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            foreach (var terrain in terrains)
+            {
+                terrain.isActive = false;
+            }
+
             meshObject = new GameObject($"Preview mesh");
             meshRenderer = meshObject.AddComponent<MeshRenderer>();
             meshFilter = meshObject.AddComponent<MeshFilter>();
@@ -52,6 +62,20 @@ namespace Controllers
             activeTerrainParams.noiseParams.seed = 0;
             activeTerrainParams.isActive = true;
             GeneratePreview();
+        }
+
+        public void SetContinueButtonActiveState()
+        {
+            if (PlayerPrefs.HasKey(Config.PrefKeyGameSave))
+            {
+                string json = PlayerPrefs.GetString(Config.PrefKeyGameSave);
+                continueButton.interactable = !string.IsNullOrEmpty(json);
+            }
+        }
+
+        public void SetContinueGamePrefFlag(bool value)
+        {
+            PlayerPrefs.SetInt(Config.PrefKeyContiuneGameFlag, value ? 1 : 0);
         }
 
         private void GeneratePreview()

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Fjords
   m_EditorClassIdentifier: 
   autoUpdate: 0
-  isActive: 1
+  terrainName: Fjords
+  isActive: 0
   noiseParams:
     seed: 0
     scale: 150
@@ -95,8 +96,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   fogEnabled: 1
-  fogColor: {r: 0.936, g: 0.9713433, b: 1, a: 1}
+  fogColor: {r: 0.954, g: 0.98950875, b: 1, a: 1}
   fogDensity: 0.002
   skybox: {fileID: 2100000, guid: 20d4f77b9022eab48b4d94599ed4bf82, type: 2}
   sunlightColor: {r: 1, g: 1, b: 1, a: 1}
-  sunlightIntensity: 1.88
+  sunlightIntensity: 1.58

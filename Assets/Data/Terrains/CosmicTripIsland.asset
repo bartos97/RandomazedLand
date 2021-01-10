@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
   m_Name: CosmicTripIsland
   m_EditorClassIdentifier: 
-  autoUpdate: 0
+  autoUpdate: 1
+  terrainName: CosmicTripIsland
   isActive: 0
   noiseParams:
     seed: 0
     scale: 200
-    persistance: 0.338
+    persistance: 0.21
     lacunarity: 4.73
     octavesAmount: 5
   useFalloffMap: 1
@@ -95,8 +96,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   fogEnabled: 1
-  fogColor: {r: 0.002669984, g: 0.2, b: 0.48235294, a: 1}
-  fogDensity: 0.0012
+  fogColor: {r: 0.0061428566, g: 0.055285722, b: 0.129, a: 1}
+  fogDensity: 0.0018
   skybox: {fileID: 2100000, guid: f531e09e2ad2fb440b4eed7605863143, type: 2}
   sunlightColor: {r: 1, g: 1, b: 1, a: 1}
-  sunlightIntensity: 0.7
+  sunlightIntensity: 0.39
