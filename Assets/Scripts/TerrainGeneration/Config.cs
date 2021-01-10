@@ -1,4 +1,6 @@
-﻿namespace TerrainGeneration
+﻿using Data;
+
+namespace TerrainGeneration
 {
     public static class InfiniteTerrainConfig
     {

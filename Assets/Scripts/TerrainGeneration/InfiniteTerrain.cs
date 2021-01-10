@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Assertions;
 using TerrainGeneration.Utils;
+using Data;
 
 namespace TerrainGeneration
 {
@@ -249,9 +250,9 @@ namespace TerrainGeneration
             public bool HasRequestedMesh { get; private set; } = false;
 
             private readonly Action onMeshDataReceivedCallback;
-            private readonly Action<Action<MeshData>, float[], LevelOfDetail> meshRequestFunction;
+            private readonly Action<Action<MeshDataWrapper>, float[], LevelOfDetail> meshRequestFunction;
 
-            public LodMesh(LevelOfDetail lod, Action onMeshCallback, Action<Action<MeshData>, float[], LevelOfDetail> requestMeshData)
+            public LodMesh(LevelOfDetail lod, Action onMeshCallback, Action<Action<MeshDataWrapper>, float[], LevelOfDetail> requestMeshData)
             {
                 this.lod = lod;
                 this.onMeshDataReceivedCallback = onMeshCallback;
@@ -264,7 +265,7 @@ namespace TerrainGeneration
                 meshRequestFunction(OnMeshDataReceived, noiseMap, lod);
             }
 
-            private void OnMeshDataReceived(MeshData meshData)
+            private void OnMeshDataReceived(MeshDataWrapper meshData)
             {
                 Mesh = meshData.GetUnityMesh();
                 HasMesh = true;

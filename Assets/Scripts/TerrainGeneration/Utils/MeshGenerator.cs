@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
-using TerrainGeneration.ScriptableObjects;
+using Data.ScriptableObjects;
 
 namespace TerrainGeneration.Utils
 {
     public static class MeshGenerator
     {
-        public static MeshData GenerateFromNoiseMap(float[] noiseMap, int verticesPerLine, TerrainParams terrainParams, int levelOfDetail)
+        public static MeshDataWrapper GenerateFromNoiseMap(float[] noiseMap, int verticesPerLine, TerrainParams terrainParams, int levelOfDetail)
         {
             Assert.AreEqual(noiseMap.Length, (verticesPerLine + 2) * (verticesPerLine + 2),
                 "Noise map has to have additional border (1 point wide) data for normals calculation");
@@ -17,7 +17,7 @@ namespace TerrainGeneration.Utils
             int visibleMeshVerticesPerLine = (verticesPerLine - 1) / levelOfDetail + 1;
             float offsetX = (verticesPerLine - 1) / -2f;
             float offsetZ = (verticesPerLine - 1) / -2f;
-            var meshData = new MeshData(visibleMeshVerticesPerLine + 2);
+            var meshData = new MeshDataWrapper(visibleMeshVerticesPerLine + 2);
             var heightCurve = new AnimationCurve(terrainParams.MeshHeightCurve.keys);
 
             int iter = 0;

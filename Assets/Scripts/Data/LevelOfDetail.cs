@@ -1,4 +1,4 @@
-﻿namespace TerrainGeneration
+﻿namespace Data
 {
     /// <summary>
     /// Mesh simplification increment

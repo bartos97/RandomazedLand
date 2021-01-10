@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace TerrainGeneration.ScriptableObjects
+namespace Data.ScriptableObjects
 {
     public class UpdatableData : ScriptableObject
     {

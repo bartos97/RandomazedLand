@@ -1,4 +1,4 @@
-﻿using TerrainGeneration.ScriptableObjects;
+﻿using Data.ScriptableObjects;
 using UnityEditor;
 using UnityEngine;
 

@@ -4,7 +4,8 @@ using UnityEngine.SceneManagement;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Linq;
-using TerrainGeneration.ScriptableObjects;
+using Data;
+using Data.ScriptableObjects;
 using TerrainGeneration.Utils;
 
 namespace TerrainGeneration
@@ -43,7 +44,7 @@ namespace TerrainGeneration
         private readonly InfiniteTerrain infiniteTerrain;
         private readonly System.Random prng;
         private readonly ConcurrentQueue<MapThreadData<float[]>> noiseMapQueue;
-        private readonly ConcurrentQueue<MapThreadData<MeshData>> meshQueue;
+        private readonly ConcurrentQueue<MapThreadData<MeshDataWrapper>> meshQueue;
         private readonly FalloffMap falloffMap;
         private int seed;
 
@@ -64,7 +65,7 @@ namespace TerrainGeneration
             prng = new System.Random();
             infiniteTerrain = new InfiniteTerrain(this);
             noiseMapQueue = new ConcurrentQueue<MapThreadData<float[]>>();
-            meshQueue = new ConcurrentQueue<MapThreadData<MeshData>>();
+            meshQueue = new ConcurrentQueue<MapThreadData<MeshDataWrapper>>();
             falloffMap = new FalloffMap(mapChunkVerticesPerLineWithBorder);
         }
 
@@ -84,7 +85,7 @@ namespace TerrainGeneration
             while (noiseMapQueue.TryDequeue(out MapThreadData<float[]> threadData))
                 threadData.callback(threadData.parameter);
 
-            while (meshQueue.TryDequeue(out MapThreadData<MeshData> threadData))
+            while (meshQueue.TryDequeue(out MapThreadData<MeshDataWrapper> threadData))
                 threadData.callback(threadData.parameter);
 
             infiniteTerrain.OnUpdate();
@@ -130,12 +131,12 @@ namespace TerrainGeneration
             th.Start();
         }
 
-        public void RequestMeshData(Action<MeshData> callback, float[] noiseMap, LevelOfDetail lod)
+        public void RequestMeshData(Action<MeshDataWrapper> callback, float[] noiseMap, LevelOfDetail lod)
         {
             var th = new Thread(() =>
             {
                 var meshData = MeshGenerator.GenerateFromNoiseMap(noiseMap, mapChunkVerticesPerLine, ActiveTerrainParams, (int)lod);
-                meshQueue.Enqueue(new MapThreadData<MeshData>(callback, meshData));
+                meshQueue.Enqueue(new MapThreadData<MeshDataWrapper>(callback, meshData));
             });
 
             th.Start();
@@ -143,6 +144,7 @@ namespace TerrainGeneration
 
         public void GeneratePreview()
         {
+            OnValidate();
             InitLightingFromParams();
             var noiseMap = NoiseGenerator.GenerateFromPerlinNoise(
                 mapChunkVerticesPerLineWithBorder, 

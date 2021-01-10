@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace TerrainGeneration.ScriptableObjects
+namespace Data.ScriptableObjects
 {
     [System.Serializable]
     public class NoiseParams

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace TerrainGeneration.ScriptableObjects
+namespace Data.ScriptableObjects
 {
     [CreateAssetMenu(fileName = "New terrain params", menuName = "Terrain generation parameters")]
     public class TerrainParams : UpdatableData

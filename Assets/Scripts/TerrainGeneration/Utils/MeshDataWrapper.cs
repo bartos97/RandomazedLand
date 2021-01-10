@@ -2,7 +2,7 @@
 
 namespace TerrainGeneration.Utils
 {
-    public class MeshData
+    public class MeshDataWrapper
     {
         public Vector3[] vertices;
         public Vector3[] normals;
@@ -12,7 +12,7 @@ namespace TerrainGeneration.Utils
         private readonly Triangle[] triangles;
         private int triangleWorkingIndex = 0;
 
-        public MeshData(int numOfVerticesPerLine)
+        public MeshDataWrapper(int numOfVerticesPerLine)
         {
             vertices = new Vector3[numOfVerticesPerLine * numOfVerticesPerLine];
             colors = new Color32[numOfVerticesPerLine * numOfVerticesPerLine];
