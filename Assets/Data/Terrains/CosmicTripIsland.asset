@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 888cea3e449f0e647a76146730376ef2, type: 3}
   m_Name: CosmicTripIsland
   m_EditorClassIdentifier: 
-  autoUpdate: 1
+  autoUpdate: 0
   isActive: 0
   noiseParams:
     seed: 0
